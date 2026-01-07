@@ -37,7 +37,7 @@ DB_NAME ?= link-short
 DB_SSLMODE ?= disable
 DATABASE_URL = host=$(DB_HOST) port=$(DB_PORT) user=$(DB_USER) password=$(DB_PASSWORD) dbname=$(DB_NAME) sslmode=$(DB_SSLMODE)
 
-.PHONY: all build run clean test fmt vet lint deps tidy sqlc migrate-up migrate-down migrate-status migrate-create help
+.PHONY: all build run clean test fmt vet lint deps tidy sqlc swagger migrate-up migrate-down migrate-status migrate-create help
 
 # Default target
 all: build
@@ -132,6 +132,16 @@ sqlc:
 sqlc-verify:
 	sqlc compile
 
+## swagger: Generate Swagger documentation (requires swag)
+swagger:
+	@which swag > /dev/null || (echo "Installing swag..." && go install github.com/swaggo/swag/cmd/swag@latest)
+	swag init
+
+## swagger-fmt: Format Swagger comments
+swagger-fmt:
+	@which swag > /dev/null || (echo "Installing swag..." && go install github.com/swaggo/swag/cmd/swag@latest)
+	swag fmt
+
 ## migrate-up: Run all database migrations (requires goose)
 migrate-up:
 	@which goose > /dev/null || (echo "Installing goose..." && go install github.com/pressly/goose/v3/cmd/goose@latest)
@@ -168,6 +178,7 @@ setup:
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	go install github.com/pressly/goose/v3/cmd/goose@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/swaggo/swag/cmd/swag@latest
 	@echo "All tools installed!"
 
 ## env: Copy .env.example to .env (if .env.example exists)
