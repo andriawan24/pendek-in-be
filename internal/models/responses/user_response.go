@@ -1,0 +1,23 @@
+package responses
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type UserResponse struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
+	IsActive   bool      `json:"is_active"`
+	IsVerified bool      `json:"is_verified"`
+}
+
+type LoginResponse struct {
+	Token                 string       `json:"token"`
+	TokenExpiredAt        time.Time    `json:"token_expired_at"`
+	RefreshToken          string       `json:"refresh_token"`
+	RefreshTokenExpiredAt time.Time    `json:"refresh_token_expired_at"`
+	User                  UserResponse `json:"user"`
+}

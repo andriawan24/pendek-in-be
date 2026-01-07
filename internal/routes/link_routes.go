@@ -1,0 +1,200 @@
+package routes
+
+import (
+	"context"
+	"database/sql"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/andriawan24/link-short/internal/database"
+	"github.com/andriawan24/link-short/internal/models/requests"
+	"github.com/andriawan24/link-short/internal/models/responses"
+	"github.com/andriawan24/link-short/internal/services"
+	"github.com/andriawan24/link-short/internal/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/medama-io/go-useragent"
+)
+
+type linkRoutes struct {
+	linkService     services.LinkService
+	clickLogService services.ClickLogService
+	cacheService    services.CacheService
+}
+
+func NewLinkRoutes(linkService services.LinkService, clickLogService services.ClickLogService, cacheService services.CacheService) linkRoutes {
+	return linkRoutes{
+		linkService:     linkService,
+		clickLogService: clickLogService,
+		cacheService:    cacheService,
+	}
+}
+
+func (r *linkRoutes) GetLink(ctx *gin.Context) {
+	userId := ctx.MustGet("user_id").(uuid.UUID)
+
+	linkId, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	link, err := r.linkService.GetLink(userId, linkId)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	utils.RespondOK(ctx, "successfully get link", responses.MapLinkResponse(link))
+}
+
+func (r *linkRoutes) GetLinks(ctx *gin.Context) {
+	userId := ctx.MustGet("user_id").(uuid.UUID)
+	var (
+		page    = 1
+		limit   = 10
+		orderBy = utils.OrderByCreatedDate
+		err     error
+	)
+
+	if ctx.Query("page") != "" {
+		page, err = strconv.Atoi(ctx.Query("page"))
+		if err != nil {
+			utils.HandleErrorResponse(ctx, err)
+			return
+		}
+	}
+
+	if ctx.Query("limit") != "" {
+		limit, err = strconv.Atoi(ctx.Query("limit"))
+		if err != nil {
+			utils.HandleErrorResponse(ctx, err)
+			return
+		}
+	}
+
+	if ctx.Query("orderBy") != "" {
+		orderBy, err = utils.ParseLinkOrderBy(ctx.Query("orderBy"))
+		if err != nil {
+			utils.HandleErrorResponse(ctx, err)
+			return
+		}
+	}
+
+	offset := (page - 1) * limit
+
+	links, err := r.linkService.GetLinks(userId, int32(limit), int32(offset), orderBy)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	utils.RespondOK(ctx, "successfully get links", responses.MapLinkResponses(links))
+}
+
+func (r *linkRoutes) InsertLink(ctx *gin.Context) {
+	userId := ctx.MustGet("user_id").(uuid.UUID)
+
+	var body requests.InsertLinkParam
+
+	err := ctx.ShouldBindJSON(&body)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	param := database.InsertLinkParams{
+		OriginalUrl: body.OriginalURL,
+		ShortCode:   utils.GenerateShortCode(),
+		CustomShortCode: sql.NullString{
+			Valid:  body.CustomShortCode != nil,
+			String: utils.GetOrElse(body.CustomShortCode, ""),
+		},
+		UserID: userId,
+		ExpiredAt: sql.NullTime{
+			Valid: body.ExpiredAt != nil,
+			Time:  utils.GetOrElse(body.ExpiredAt, time.Now()),
+		},
+	}
+
+	link, err := r.linkService.InsertLink(param)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	utils.RespondOK(ctx, "successfully insert new link", responses.MapLinkResponse(link))
+}
+
+func (r *linkRoutes) Redirect(ctx *gin.Context) {
+	code := ctx.Param("code")
+	reqCtx := ctx.Request.Context()
+
+	parser := useragent.NewParser()
+	ua := parser.Parse(ctx.Request.UserAgent())
+
+	deviceType := utils.ParseDeviceType(ua)
+	country := utils.ParseCountryFromIp(ctx.ClientIP())
+	traffic := utils.ParseTrafficSource(ctx.Request.Referer())
+	browser := utils.ParseBrowser(ua)
+
+	param := database.InsertClickLogParams{
+		Code: code,
+		IpAddress: sql.NullString{
+			Valid:  ctx.ClientIP() != "",
+			String: ctx.ClientIP(),
+		},
+		UserAgent: sql.NullString{
+			Valid:  ctx.Request.UserAgent() != "",
+			String: ctx.Request.UserAgent(),
+		},
+		Referrer: sql.NullString{
+			Valid:  ctx.Request.Referer() != "",
+			String: ctx.Request.Referer(),
+		},
+		DeviceType: sql.NullString{
+			Valid:  deviceType != "",
+			String: deviceType,
+		},
+		Country: sql.NullString{
+			Valid:  country != "",
+			String: country,
+		},
+		Traffic: sql.NullString{
+			Valid:  traffic != "",
+			String: traffic,
+		},
+		Browser: sql.NullString{
+			Valid:  browser != "",
+			String: browser,
+		},
+	}
+
+	// Try redis
+	originalURL, err := r.cacheService.GetURL(reqCtx, code)
+	if err == nil && originalURL != "" {
+		if _, err := r.clickLogService.InsertClickLog(reqCtx, param); err != nil {
+			log.Printf("failed to insert click log (redis hit) for code %s: %v", code, err)
+		}
+		ctx.Redirect(http.StatusMovedPermanently, originalURL)
+		return
+	}
+
+	originalURL, err = r.linkService.GetRedirectedLink(code)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	go func() {
+		_ = r.cacheService.SetURL(context.Background(), code, originalURL, 24*time.Hour)
+	}()
+
+	if _, err := r.clickLogService.InsertClickLog(reqCtx, param); err != nil {
+		log.Printf("failed to insert click log (db hit) for code %s: %v", code, err)
+	}
+
+	ctx.Redirect(http.StatusMovedPermanently, originalURL)
+}
