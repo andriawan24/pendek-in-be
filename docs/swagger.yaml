@@ -1,0 +1,615 @@
+basePath: /
+definitions:
+  requests.InsertLinkParam:
+    properties:
+      custom_short_code:
+        type: string
+      expired_at:
+        type: string
+      original_url:
+        type: string
+    required:
+    - original_url
+    type: object
+  requests.LoginParam:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  requests.RefreshParam:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  requests.RegisterParam:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  requests.UpdateProfileParam:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  responses.AnalyticOverview:
+    properties:
+      date:
+        type: string
+      value:
+        type: integer
+    type: object
+  responses.AnalyticsResponse:
+    properties:
+      avg_daily_click:
+        type: integer
+      browser_usages:
+        items:
+          $ref: '#/definitions/responses.TypeValue'
+        type: array
+      device_breakdowns:
+        items:
+          $ref: '#/definitions/responses.TypeValue'
+        type: array
+      from_date:
+        type: string
+      overviews:
+        items:
+          $ref: '#/definitions/responses.AnalyticOverview'
+        type: array
+      time_range:
+        type: string
+      to_date:
+        type: string
+      top_countries:
+        items:
+          $ref: '#/definitions/responses.TypeValue'
+        type: array
+      top_link:
+        $ref: '#/definitions/responses.TopLink'
+      total_active_links:
+        type: integer
+      total_clicks:
+        type: integer
+      traffic_sources:
+        items:
+          $ref: '#/definitions/responses.TypeValue'
+        type: array
+    type: object
+  responses.BaseResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  responses.DashboardResponse:
+    properties:
+      overviews:
+        items:
+          $ref: '#/definitions/responses.AnalyticOverview'
+        type: array
+      recents:
+        items:
+          $ref: '#/definitions/responses.LinkResponse'
+        type: array
+      top_link:
+        $ref: '#/definitions/responses.TopLink'
+      total_active_links:
+        type: integer
+      total_clicks:
+        type: integer
+    type: object
+  responses.ErrorResponse:
+    properties:
+      error: {}
+      message:
+        type: string
+    type: object
+  responses.LinkResponse:
+    properties:
+      click_count:
+        type: integer
+      created_at:
+        type: string
+      custom_short_code:
+        type: string
+      expired_at:
+        type: string
+      id:
+        type: string
+      original_url:
+        type: string
+      short_code:
+        type: string
+    type: object
+  responses.LoginResponse:
+    properties:
+      refresh_token:
+        type: string
+      refresh_token_expired_at:
+        type: string
+      token:
+        type: string
+      token_expired_at:
+        type: string
+      user:
+        $ref: '#/definitions/responses.UserResponse'
+    type: object
+  responses.TopLink:
+    properties:
+      link:
+        $ref: '#/definitions/responses.LinkResponse'
+      total_clicks:
+        type: integer
+    type: object
+  responses.TypeValue:
+    properties:
+      type:
+        type: string
+      value:
+        type: integer
+    type: object
+  responses.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      is_verified:
+        type: boolean
+      name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@pendek.in
+    name: API Support
+  description: URL Shortener API with analytics and link management
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Pendek.in API
+  version: "1.0"
+paths:
+  /{code}:
+    get:
+      description: Redirect to the original URL using the short code
+      parameters:
+      - description: Short code
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "301":
+          description: Redirect to original URL
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Redirect to original URL
+      tags:
+      - Redirect
+  /analytics/:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed analytics including device breakdowns, countries,
+        traffic sources, and browser usage
+      parameters:
+      - default: 30d
+        description: Time range
+        enum:
+        - 7d
+        - 30d
+        - 90d
+        - all
+        in: query
+        name: range
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.AnalyticsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get analytics data
+      tags:
+      - Analytics
+  /analytics/dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Get dashboard overview including total clicks, active links, top
+        link, and recent links
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.DashboardResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get dashboard data
+      tags:
+      - Analytics
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.LoginParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.LoginResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: User login
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Get current authenticated user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.UserResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get new access token using refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.RefreshParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.LoginResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Refresh token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.RegisterParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Register new user
+      tags:
+      - Auth
+  /auth/update-profile:
+    put:
+      consumes:
+      - application/json
+      description: Update current authenticated user profile
+      parameters:
+      - description: Profile update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateProfileParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - Auth
+  /links/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a specific link by its ID
+      parameters:
+      - description: Link ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.LinkResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get link by ID
+      tags:
+      - Links
+  /links/all:
+    get:
+      consumes:
+      - application/json
+      description: Get all links for the authenticated user with pagination
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Order by field
+        enum:
+        - created_at
+        - counts
+        in: query
+        name: orderBy
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/responses.LinkResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all links
+      tags:
+      - Links
+  /links/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new shortened link
+      parameters:
+      - description: Link details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.InsertLinkParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.LinkResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create new link
+      tags:
+      - Links
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

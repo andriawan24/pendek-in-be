@@ -32,6 +32,20 @@ func NewLinkRoutes(linkService services.LinkService, clickLogService services.Cl
 	}
 }
 
+// GetLink godoc
+// @Summary      Get link by ID
+// @Description  Get a specific link by its ID
+// @Tags         Links
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Link ID"
+// @Success      200  {object}  responses.BaseResponse{data=responses.LinkResponse}
+// @Failure      400  {object}  responses.ErrorResponse
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      404  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /links/{id} [get]
 func (r *linkRoutes) GetLink(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 
@@ -50,6 +64,21 @@ func (r *linkRoutes) GetLink(ctx *gin.Context) {
 	utils.RespondOK(ctx, "successfully get link", responses.MapLinkResponse(link))
 }
 
+// GetLinks godoc
+// @Summary      Get all links
+// @Description  Get all links for the authenticated user with pagination
+// @Tags         Links
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page     query     int     false  "Page number"       default(1)
+// @Param        limit    query     int     false  "Items per page"    default(10)
+// @Param        orderBy  query     string  false  "Order by field"    Enums(created_at, counts)
+// @Success      200  {object}  responses.BaseResponse{data=[]responses.LinkResponse}
+// @Failure      400  {object}  responses.ErrorResponse
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /links/all [get]
 func (r *linkRoutes) GetLinks(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 	var (
@@ -94,6 +123,19 @@ func (r *linkRoutes) GetLinks(ctx *gin.Context) {
 	utils.RespondOK(ctx, "successfully get links", responses.MapLinkResponses(links))
 }
 
+// InsertLink godoc
+// @Summary      Create new link
+// @Description  Create a new shortened link
+// @Tags         Links
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body requests.InsertLinkParam true "Link details"
+// @Success      200  {object}  responses.BaseResponse{data=responses.LinkResponse}
+// @Failure      400  {object}  responses.ErrorResponse
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /links/create [post]
 func (r *linkRoutes) InsertLink(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 
@@ -128,6 +170,15 @@ func (r *linkRoutes) InsertLink(ctx *gin.Context) {
 	utils.RespondOK(ctx, "successfully insert new link", responses.MapLinkResponse(link))
 }
 
+// Redirect godoc
+// @Summary      Redirect to original URL
+// @Description  Redirect to the original URL using the short code
+// @Tags         Redirect
+// @Param        code   path      string  true  "Short code"
+// @Success      301  {string}  string  "Redirect to original URL"
+// @Failure      404  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /{code} [get]
 func (r *linkRoutes) Redirect(ctx *gin.Context) {
 	code := ctx.Param("code")
 	reqCtx := ctx.Request.Context()

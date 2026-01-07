@@ -22,6 +22,17 @@ func NewAnalyticRoutes(linkService services.LinkService, clickLogService service
 	}
 }
 
+// GetDashboard godoc
+// @Summary      Get dashboard data
+// @Description  Get dashboard overview including total clicks, active links, top link, and recent links
+// @Tags         Analytics
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  responses.BaseResponse{data=responses.DashboardResponse}
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /analytics/dashboard [get]
 func (r *analyticRoutes) GetDashboard(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 
@@ -77,6 +88,18 @@ func (r *analyticRoutes) GetDashboard(ctx *gin.Context) {
 	utils.RespondOK(ctx, "successfully get dashboard", response)
 }
 
+// GetAnalytics godoc
+// @Summary      Get analytics data
+// @Description  Get detailed analytics including device breakdowns, countries, traffic sources, and browser usage
+// @Tags         Analytics
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        range  query     string  false  "Time range"  Enums(7d, 30d, 90d, all)  default(30d)
+// @Success      200  {object}  responses.BaseResponse{data=responses.AnalyticsResponse}
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /analytics/ [get]
 func (r *analyticRoutes) GetAnalytics(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 

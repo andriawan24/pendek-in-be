@@ -24,6 +24,17 @@ func NewAuthRoutes(userService services.UserService) authRoutes {
 	}
 }
 
+// Login godoc
+// @Summary      User login
+// @Description  Authenticate user with email and password
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request body requests.LoginParam true "Login credentials"
+// @Success      200  {object}  responses.BaseResponse{data=responses.LoginResponse}
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /auth/login [post]
 func (r *authRoutes) Login(ctx *gin.Context) {
 	var param requests.LoginParam
 
@@ -79,6 +90,17 @@ func (r *authRoutes) Login(ctx *gin.Context) {
 	utils.RespondOK(ctx, "successfully login", response)
 }
 
+// Refresh godoc
+// @Summary      Refresh token
+// @Description  Get new access token using refresh token
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request body requests.RefreshParam true "Refresh token"
+// @Success      200  {object}  responses.BaseResponse{data=responses.LoginResponse}
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /auth/refresh [post]
 func (r *authRoutes) Refresh(ctx *gin.Context) {
 	var param requests.RefreshParam
 
@@ -123,6 +145,17 @@ func (r *authRoutes) Refresh(ctx *gin.Context) {
 	utils.RespondOK(ctx, "successfully refresh token", response)
 }
 
+// Register godoc
+// @Summary      Register new user
+// @Description  Create a new user account
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request body requests.RegisterParam true "Registration details"
+// @Success      200  {object}  responses.BaseResponse{data=responses.LoginResponse}
+// @Failure      400  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /auth/register [post]
 func (r *authRoutes) Register(ctx *gin.Context) {
 	var param requests.RegisterParam
 
@@ -182,6 +215,17 @@ func (r *authRoutes) Register(ctx *gin.Context) {
 	utils.RespondOK(ctx, "successfully register", response)
 }
 
+// Profile godoc
+// @Summary      Get user profile
+// @Description  Get current authenticated user profile
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  responses.BaseResponse{data=responses.UserResponse}
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /auth/me [get]
 func (r *authRoutes) Profile(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 
@@ -202,6 +246,19 @@ func (r *authRoutes) Profile(ctx *gin.Context) {
 	utils.RespondOK(ctx, "successfully get profile", response)
 }
 
+// UpdateProfile godoc
+// @Summary      Update user profile
+// @Description  Update current authenticated user profile
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body requests.UpdateProfileParam true "Profile update details"
+// @Success      200  {object}  responses.BaseResponse{data=responses.UserResponse}
+// @Failure      400  {object}  responses.ErrorResponse
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /auth/update-profile [put]
 func (r *authRoutes) UpdateProfile(ctx *gin.Context) {
 	var param requests.UpdateProfileParam
 
