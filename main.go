@@ -165,6 +165,7 @@ func registerRoutes(r *gin.Engine, ctx context.Context, db *sql.DB, queries *dat
 	analyticGroup := r.Group("/analytics", middlewares.RequiredAuth())
 	{
 		analyticGroup.GET("/dashboard", analyticRoutes.GetDashboard)
+		analyticGroup.GET("/", analyticRoutes.GetAnalytics)
 	}
 
 	r.GET("/:code", linkRoutes.Redirect)

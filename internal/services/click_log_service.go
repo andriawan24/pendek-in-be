@@ -15,6 +15,10 @@ type clickLogService struct {
 type ClickLogService interface {
 	InsertClickLog(ctx context.Context, param database.InsertClickLogParams) (database.ClickLog, error)
 	GetByDateRange(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetByDateRangeRow, error)
+	GetDeviceBreakdown(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetDeviceBreakdownRow, error)
+	GetTopCountries(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetTopCountriesRow, error)
+	GetTrafficSources(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetTrafficSourcesRow, error)
+	GetBrowserUsage(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetBrowserUsageRow, error)
 }
 
 func NewClickLogService(queries *database.Queries) ClickLogService {
@@ -43,4 +47,56 @@ func (c *clickLogService) GetByDateRange(ctx context.Context, userId uuid.UUID, 
 	}
 
 	return logs, nil
+}
+
+func (c *clickLogService) GetDeviceBreakdown(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetDeviceBreakdownRow, error) {
+	devices, err := c.queries.GetDeviceBreakdown(ctx, database.GetDeviceBreakdownParams{
+		FromDate: from,
+		ToDate:   to,
+		UserID:   userId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return devices, nil
+}
+
+func (c *clickLogService) GetTopCountries(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetTopCountriesRow, error) {
+	countries, err := c.queries.GetTopCountries(ctx, database.GetTopCountriesParams{
+		FromDate: from,
+		ToDate:   to,
+		UserID:   userId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return countries, nil
+}
+
+func (c *clickLogService) GetTrafficSources(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetTrafficSourcesRow, error) {
+	sources, err := c.queries.GetTrafficSources(ctx, database.GetTrafficSourcesParams{
+		FromDate: from,
+		ToDate:   to,
+		UserID:   userId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return sources, nil
+}
+
+func (c *clickLogService) GetBrowserUsage(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetBrowserUsageRow, error) {
+	browsers, err := c.queries.GetBrowserUsage(ctx, database.GetBrowserUsageParams{
+		FromDate: from,
+		ToDate:   to,
+		UserID:   userId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return browsers, nil
 }

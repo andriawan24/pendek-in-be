@@ -144,24 +144,6 @@ func (q *Queries) GetTotalActiveLinks(ctx context.Context, userID uuid.UUID) (in
 	return total, err
 }
 
-const getTotalClicks = `-- name: GetTotalClicks :one
-WITH click_counts AS (
-    SELECT l.id, COUNT(cl.*) AS total_clicks
-    FROM links l
-    LEFT JOIN click_logs cl ON l.short_code = cl.code OR l.custom_short_code = cl.code
-    WHERE l.user_id = $1 AND l.deleted_at IS NULL
-    GROUP BY l.id
-)
-SELECT COALESCE(SUM(total_clicks), 0) AS total FROM click_counts
-`
-
-func (q *Queries) GetTotalClicks(ctx context.Context, userID uuid.UUID) (interface{}, error) {
-	row := q.db.QueryRowContext(ctx, getTotalClicks, userID)
-	var total interface{}
-	err := row.Scan(&total)
-	return total, err
-}
-
 const insertLink = `-- name: InsertLink :one
 INSERT INTO links(
     original_url,

@@ -40,15 +40,5 @@ UPDATE links SET deleted_at = NOW() WHERE id = $1;
 -- name: UpdateLink :exec
 UPDATE links SET custom_short_code = $1, original_url = $2, expired_at = $3 WHERE id = $1;
 
--- name: GetTotalClicks :one
-WITH click_counts AS (
-    SELECT l.id, COUNT(cl.*) AS total_clicks
-    FROM links l
-    LEFT JOIN click_logs cl ON l.short_code = cl.code OR l.custom_short_code = cl.code
-    WHERE l.user_id = $1 AND l.deleted_at IS NULL
-    GROUP BY l.id
-)
-SELECT COALESCE(SUM(total_clicks), 0) AS total FROM click_counts;
-
 -- name: GetTotalActiveLinks :one
 SELECT COUNT(*) as total FROM links l WHERE l.user_id = $1 AND l.deleted_at IS NULL;

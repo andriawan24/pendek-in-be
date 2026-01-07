@@ -36,6 +36,16 @@ type Link struct {
 	DeletedAt       sql.NullTime
 }
 
+type RefreshToken struct {
+	ID        uuid.UUID
+	Token     string
+	UserID    uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ExpiresAt time.Time
+	RevokedAt time.Time
+}
+
 type User struct {
 	ID           uuid.UUID
 	Name         string

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/andriawan24/link-short/internal/database"
 	"github.com/andriawan24/link-short/internal/utils"
@@ -14,7 +15,7 @@ type linkService struct {
 }
 
 type LinkService interface {
-	GetTotalCounts(userId uuid.UUID) (int64, error)
+	GetTotalCounts(userId uuid.UUID, from time.Time, to time.Time) (int64, error)
 	GetTotalActiveLinks(userId uuid.UUID) (int64, error)
 	GetLinks(userId uuid.UUID, limit int32, offset int32, orderBy utils.LinkOrderBy) ([]database.GetLinksRow, error)
 	GetLink(userId uuid.UUID, id uuid.UUID) (database.Link, error)
@@ -77,8 +78,14 @@ func (l *linkService) InsertLink(param database.InsertLinkParams) (database.Link
 	return link, nil
 }
 
-func (l *linkService) GetTotalCounts(userId uuid.UUID) (int64, error) {
-	count, err := l.queries.GetTotalClicks(l.ctx, userId)
+func (l *linkService) GetTotalCounts(userId uuid.UUID, from time.Time, to time.Time) (int64, error) {
+	param := database.GetTotalClicksParams{
+		UserID:   userId,
+		FromDate: from,
+		ToDate:   to,
+	}
+
+	count, err := l.queries.GetTotalClicks(l.ctx, param)
 	if err != nil {
 		return 0, err
 	}

@@ -22,9 +22,8 @@ CREATE INDEX idx_click_logs_code ON click_logs(code);
 -- +goose Down
 -- +goose StatementBegin
 DROP INDEX IF EXISTS idx_click_logs_code;
-ALTER TABLE click_logs DROP CONSTRAINT chk_code_exists;
-DROP FUNCTION IF EXISTS check_code_exists;
-ALTER TABLE click_logs DROP COLUMN code;
-ALTER TABLE click_logs ADD COLUMN link_id UUID NOT NULL;
-ALTER TABLE click_logs ADD CONSTRAINT fk_click_logs_link_id FOREIGN KEY (link_id) REFERENCES links(id);
+ALTER TABLE click_logs DROP CONSTRAINT IF EXISTS chk_code_exists;
+DROP FUNCTION IF EXISTS check_code_exists(VARCHAR);
+ALTER TABLE click_logs DROP COLUMN IF EXISTS code;
+ALTER TABLE click_logs ADD COLUMN link_id UUID;
 -- +goose StatementEnd

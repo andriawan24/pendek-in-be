@@ -13,6 +13,51 @@ import (
 	"github.com/google/uuid"
 )
 
+const getBrowserUsage = `-- name: GetBrowserUsage :many
+SELECT 
+    COALESCE(cl.browser, 'Unknown') AS browser,
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN $2::timestamp AND $3::timestamp AND l.user_id = $1
+GROUP BY cl.browser
+ORDER BY total DESC
+`
+
+type GetBrowserUsageParams struct {
+	UserID   uuid.UUID
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+type GetBrowserUsageRow struct {
+	Browser string
+	Total   int64
+}
+
+func (q *Queries) GetBrowserUsage(ctx context.Context, arg GetBrowserUsageParams) ([]GetBrowserUsageRow, error) {
+	rows, err := q.db.QueryContext(ctx, getBrowserUsage, arg.UserID, arg.FromDate, arg.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetBrowserUsageRow
+	for rows.Next() {
+		var i GetBrowserUsageRow
+		if err := rows.Scan(&i.Browser, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getByDateRange = `-- name: GetByDateRange :many
 SELECT 
     DATE_TRUNC('day', cl.clicked_at)::timestamp AS date,
@@ -45,6 +90,167 @@ func (q *Queries) GetByDateRange(ctx context.Context, arg GetByDateRangeParams) 
 	for rows.Next() {
 		var i GetByDateRangeRow
 		if err := rows.Scan(&i.Date, &i.TotalClick); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDeviceBreakdown = `-- name: GetDeviceBreakdown :many
+SELECT 
+    COALESCE(cl.device_type, 'Unknown') AS device_type,
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN $2::timestamp AND $3::timestamp AND l.user_id = $1
+GROUP BY cl.device_type
+ORDER BY total DESC
+`
+
+type GetDeviceBreakdownParams struct {
+	UserID   uuid.UUID
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+type GetDeviceBreakdownRow struct {
+	DeviceType string
+	Total      int64
+}
+
+func (q *Queries) GetDeviceBreakdown(ctx context.Context, arg GetDeviceBreakdownParams) ([]GetDeviceBreakdownRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDeviceBreakdown, arg.UserID, arg.FromDate, arg.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDeviceBreakdownRow
+	for rows.Next() {
+		var i GetDeviceBreakdownRow
+		if err := rows.Scan(&i.DeviceType, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTopCountries = `-- name: GetTopCountries :many
+SELECT 
+    COALESCE(cl.country, 'Unknown') AS country,
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN $2::timestamp AND $3::timestamp AND l.user_id = $1
+GROUP BY cl.country
+ORDER BY total DESC
+LIMIT 10
+`
+
+type GetTopCountriesParams struct {
+	UserID   uuid.UUID
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+type GetTopCountriesRow struct {
+	Country string
+	Total   int64
+}
+
+func (q *Queries) GetTopCountries(ctx context.Context, arg GetTopCountriesParams) ([]GetTopCountriesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTopCountries, arg.UserID, arg.FromDate, arg.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopCountriesRow
+	for rows.Next() {
+		var i GetTopCountriesRow
+		if err := rows.Scan(&i.Country, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTotalClicks = `-- name: GetTotalClicks :one
+WITH click_counts AS (
+    SELECT l.id, COUNT(cl.*) AS total_clicks
+    FROM links l
+    LEFT JOIN click_logs cl ON l.short_code = cl.code OR l.custom_short_code = cl.code
+    WHERE l.user_id = $1 AND l.deleted_at IS NULL AND
+    cl.clicked_at BETWEEN $2::timestamp AND $3::timestamp AND l.user_id = $1
+    GROUP BY l.id
+)
+SELECT COALESCE(SUM(total_clicks), 0) AS total FROM click_counts
+`
+
+type GetTotalClicksParams struct {
+	UserID   uuid.UUID
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+func (q *Queries) GetTotalClicks(ctx context.Context, arg GetTotalClicksParams) (interface{}, error) {
+	row := q.db.QueryRowContext(ctx, getTotalClicks, arg.UserID, arg.FromDate, arg.ToDate)
+	var total interface{}
+	err := row.Scan(&total)
+	return total, err
+}
+
+const getTrafficSources = `-- name: GetTrafficSources :many
+SELECT 
+    COALESCE(cl.traffic, 'Direct') AS traffic_source,
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN $2::timestamp AND $3::timestamp AND l.user_id = $1
+GROUP BY cl.traffic
+ORDER BY total DESC
+`
+
+type GetTrafficSourcesParams struct {
+	UserID   uuid.UUID
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+type GetTrafficSourcesRow struct {
+	TrafficSource string
+	Total         int64
+}
+
+func (q *Queries) GetTrafficSources(ctx context.Context, arg GetTrafficSourcesParams) ([]GetTrafficSourcesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTrafficSources, arg.UserID, arg.FromDate, arg.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTrafficSourcesRow
+	for rows.Next() {
+		var i GetTrafficSourcesRow
+		if err := rows.Scan(&i.TrafficSource, &i.Total); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
