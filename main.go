@@ -163,9 +163,10 @@ func registerRoutes(r *gin.Engine, ctx context.Context, db *sql.DB, queries *dat
 	linkService := services.NewLinkService(ctx, queries)
 	cacheService := services.NewCacheService(rdb)
 	clickLogService := services.NewClickLogService(queries)
+	oauthService := services.NewOAuthService()
 
 	linkRoutes := routes.NewLinkRoutes(linkService, clickLogService, cacheService)
-	authRoutes := routes.NewAuthRoutes(userService)
+	authRoutes := routes.NewAuthRoutes(userService, oauthService)
 	analyticRoutes := routes.NewAnalyticRoutes(linkService, clickLogService)
 
 	authGroup := r.Group("/auth")
@@ -175,6 +176,7 @@ func registerRoutes(r *gin.Engine, ctx context.Context, db *sql.DB, queries *dat
 		authGroup.POST("/refresh", authRoutes.Refresh)
 		authGroup.POST("/register", authRoutes.Register)
 		authGroup.PUT("/update-profile", middlewares.RequiredAuth(), authRoutes.UpdateProfile)
+		authGroup.GET("/google", authRoutes.GoogleAuth)
 	}
 
 	linkGroup := r.Group("/links", middlewares.RequiredAuth())

@@ -148,6 +148,57 @@ func (q *Queries) GetDeviceBreakdown(ctx context.Context, arg GetDeviceBreakdown
 	return items, nil
 }
 
+const getDeviceBreakdownSingle = `-- name: GetDeviceBreakdownSingle :many
+SELECT 
+    COALESCE(cl.device_type, 'Unknown') AS device_type,
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN $3::timestamp AND $4::timestamp AND l.user_id = $1 AND l.id = $2
+GROUP BY cl.device_type
+ORDER BY total DESC
+`
+
+type GetDeviceBreakdownSingleParams struct {
+	UserID   uuid.UUID
+	ID       uuid.UUID
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+type GetDeviceBreakdownSingleRow struct {
+	DeviceType string
+	Total      int64
+}
+
+func (q *Queries) GetDeviceBreakdownSingle(ctx context.Context, arg GetDeviceBreakdownSingleParams) ([]GetDeviceBreakdownSingleRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDeviceBreakdownSingle,
+		arg.UserID,
+		arg.ID,
+		arg.FromDate,
+		arg.ToDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDeviceBreakdownSingleRow
+	for rows.Next() {
+		var i GetDeviceBreakdownSingleRow
+		if err := rows.Scan(&i.DeviceType, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTopCountries = `-- name: GetTopCountries :many
 SELECT 
     COALESCE(cl.country, 'Unknown') AS country,
@@ -180,6 +231,58 @@ func (q *Queries) GetTopCountries(ctx context.Context, arg GetTopCountriesParams
 	var items []GetTopCountriesRow
 	for rows.Next() {
 		var i GetTopCountriesRow
+		if err := rows.Scan(&i.Country, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTopCountriesSingle = `-- name: GetTopCountriesSingle :many
+SELECT 
+    COALESCE(cl.country, 'Unknown') AS country,
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN $3::timestamp AND $4::timestamp AND l.user_id = $1 AND l.id = $2
+GROUP BY cl.country
+ORDER BY total DESC
+LIMIT 10
+`
+
+type GetTopCountriesSingleParams struct {
+	UserID   uuid.UUID
+	ID       uuid.UUID
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+type GetTopCountriesSingleRow struct {
+	Country string
+	Total   int64
+}
+
+func (q *Queries) GetTopCountriesSingle(ctx context.Context, arg GetTopCountriesSingleParams) ([]GetTopCountriesSingleRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTopCountriesSingle,
+		arg.UserID,
+		arg.ID,
+		arg.FromDate,
+		arg.ToDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopCountriesSingleRow
+	for rows.Next() {
+		var i GetTopCountriesSingleRow
 		if err := rows.Scan(&i.Country, &i.Total); err != nil {
 			return nil, err
 		}

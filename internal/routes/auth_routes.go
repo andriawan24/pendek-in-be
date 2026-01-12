@@ -15,12 +15,14 @@ import (
 )
 
 type authRoutes struct {
-	userService services.UserService
+	userService  services.UserService
+	oauthService services.OAuthService
 }
 
-func NewAuthRoutes(userService services.UserService) authRoutes {
+func NewAuthRoutes(userService services.UserService, oauthService services.OAuthService) authRoutes {
 	return authRoutes{
-		userService: userService,
+		userService:  userService,
+		oauthService: oauthService,
 	}
 }
 
@@ -317,4 +319,87 @@ func (r *authRoutes) UpdateProfile(ctx *gin.Context) {
 	}
 
 	utils.RespondOK(ctx, "successfully update profile", response)
+}
+
+// GoogleAuth godoc
+// @Summary      Google OAuth authentication
+// @Description  Authenticate or register user via Google OAuth. Use without code param to get redirect URL, with code param to complete authentication.
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        code  query     string  false  "OAuth authorization code from Google callback"
+// @Success      200   {object}  responses.BaseResponse{data=responses.LoginResponse}
+// @Failure      400   {object}  responses.ErrorResponse
+// @Failure      500   {object}  responses.ErrorResponse
+// @Router       /auth/google [get]
+func (r *authRoutes) GoogleAuth(ctx *gin.Context) {
+	code := ctx.Query("code")
+
+	if code == "" {
+		state := uuid.New().String()
+		authURL := r.oauthService.GetGoogleAuthURL(state)
+		response := responses.LoginResponse{
+			AuthURL: authURL,
+			State:   state,
+		}
+		utils.RespondOK(ctx, "redirect to Google for authentication", response)
+		return
+	}
+
+	googleUser, err := r.oauthService.GetGoogleUserInfo(ctx.Request.Context(), code)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	user, err := r.userService.FindUserByGoogleID(googleUser.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			insertParam := database.InsertUserWithGoogleParams{
+				Name:  googleUser.Name,
+				Email: googleUser.Email,
+				GoogleID: sql.NullString{
+					String: googleUser.ID,
+					Valid:  true,
+				},
+			}
+
+			user, err = r.userService.InsertUserWithGoogle(insertParam)
+			if err != nil {
+				utils.HandleErrorResponse(ctx, err)
+				return
+			}
+		} else {
+			utils.HandleErrorResponse(ctx, err)
+			return
+		}
+	}
+
+	accessToken, accessClaim, err := utils.GenerateJwtToken(user)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	refreshToken, refreshClaim, err := utils.GenerateRefreshToken(user)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	response := responses.LoginResponse{
+		Token:                 accessToken,
+		TokenExpiredAt:        accessClaim.ExpiresAt.Time,
+		RefreshToken:          refreshToken,
+		RefreshTokenExpiredAt: refreshClaim.ExpiresAt.Time,
+		User: responses.UserResponse{
+			ID:         user.ID,
+			Name:       user.Name,
+			Email:      user.Email,
+			IsActive:   user.IsActive,
+			IsVerified: user.IsVerified,
+		},
+	}
+
+	utils.RespondOK(ctx, "successfully authenticated with Google", response)
 }

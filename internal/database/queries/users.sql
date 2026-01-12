@@ -21,7 +21,26 @@ INSERT INTO users(
 RETURNING *;
 
 -- name: UpdateUser :one
-UPDATE users SET 
+UPDATE users SET
 name = $1, email = $2, password_hash = $3, is_verified = $4
 WHERE id = $5 AND deleted_at IS NULL
+RETURNING *;
+
+-- name: GetUserByGoogleID :one
+SELECT *
+FROM users
+WHERE google_id = $1 AND deleted_at IS NULL;
+
+-- name: InsertUserWithGoogle :one
+INSERT INTO users(
+    name,
+    email,
+    google_id,
+    is_verified
+) VALUES (
+    $1,
+    $2,
+    $3,
+    TRUE
+)
 RETURNING *;

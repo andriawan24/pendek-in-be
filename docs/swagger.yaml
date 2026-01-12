@@ -131,6 +131,10 @@ definitions:
         type: string
       custom_short_code:
         type: string
+      device_breakdowns:
+        items:
+          $ref: '#/definitions/responses.TypeValue'
+        type: array
       expired_at:
         type: string
       id:
@@ -139,12 +143,20 @@ definitions:
         type: string
       short_code:
         type: string
+      top_countries:
+        items:
+          $ref: '#/definitions/responses.TypeValue'
+        type: array
     type: object
   responses.LoginResponse:
     properties:
+      auth_url:
+        type: string
       refresh_token:
         type: string
       refresh_token_expired_at:
+        type: string
+      state:
         type: string
       token:
         type: string
@@ -291,6 +303,40 @@ paths:
       summary: Get dashboard data
       tags:
       - Analytics
+  /auth/google:
+    get:
+      consumes:
+      - application/json
+      description: Authenticate or register user via Google OAuth. Use without code
+        param to get redirect URL, with code param to complete authentication.
+      parameters:
+      - description: OAuth authorization code from Google callback
+        in: query
+        name: code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Google OAuth authentication
+      tags:
+      - Auth
   /auth/login:
     post:
       consumes:

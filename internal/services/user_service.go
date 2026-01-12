@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/andriawan24/link-short/internal/database"
 	"github.com/google/uuid"
@@ -15,7 +16,9 @@ type userService struct {
 type UserService interface {
 	GetUserByID(id uuid.UUID) (database.User, error)
 	FindUserByEmail(email string) (database.User, error)
+	FindUserByGoogleID(googleID string) (database.User, error)
 	InsertUser(param database.InsertUserParams) (database.User, error)
+	InsertUserWithGoogle(param database.InsertUserWithGoogleParams) (database.User, error)
 	UpdateUser(param database.UpdateUserParams) (database.User, error)
 }
 
@@ -64,4 +67,22 @@ func (s *userService) UpdateUser(param database.UpdateUserParams) (database.User
 	}
 
 	return updatedUser, nil
+}
+
+func (s *userService) FindUserByGoogleID(googleID string) (database.User, error) {
+	user, err := s.queries.GetUserByGoogleID(s.ctx, sql.NullString{String: googleID, Valid: true})
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (s *userService) InsertUserWithGoogle(param database.InsertUserWithGoogleParams) (database.User, error) {
+	newUser, err := s.queries.InsertUserWithGoogle(s.ctx, param)
+	if err != nil {
+		return newUser, err
+	}
+
+	return newUser, nil
 }

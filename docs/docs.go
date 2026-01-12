@@ -142,6 +142,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/google": {
+            "get": {
+                "description": "Authenticate or register user via Google OAuth. Use without code param to get redirect URL, with code param to complete authentication.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Google OAuth authentication",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OAuth authorization code from Google callback",
+                        "name": "code",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/responses.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/responses.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticate user with email and password",
@@ -905,6 +960,12 @@ const docTemplate = `{
                 "custom_short_code": {
                     "type": "string"
                 },
+                "device_breakdowns": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.TypeValue"
+                    }
+                },
                 "expired_at": {
                     "type": "string"
                 },
@@ -916,16 +977,28 @@ const docTemplate = `{
                 },
                 "short_code": {
                     "type": "string"
+                },
+                "top_countries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.TypeValue"
+                    }
                 }
             }
         },
         "responses.LoginResponse": {
             "type": "object",
             "properties": {
+                "auth_url": {
+                    "type": "string"
+                },
                 "refresh_token": {
                     "type": "string"
                 },
                 "refresh_token_expired_at": {
+                    "type": "string"
+                },
+                "state": {
                     "type": "string"
                 },
                 "token": {

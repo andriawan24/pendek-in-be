@@ -20,4 +20,6 @@ type LoginResponse struct {
 	RefreshToken          string       `json:"refresh_token"`
 	RefreshTokenExpiredAt time.Time    `json:"refresh_token_expired_at"`
 	User                  UserResponse `json:"user"`
+	AuthURL               string       `json:"auth_url"`
+	State                 string       `json:"state"`
 }

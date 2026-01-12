@@ -61,7 +61,25 @@ func (r *linkRoutes) GetLink(ctx *gin.Context) {
 		return
 	}
 
-	utils.RespondOK(ctx, "successfully get link", responses.MapLinkResponse(link))
+	to := time.Now()
+	from := time.Time{}
+
+	deviceBreakdown, err := r.clickLogService.GetDeviceBreakdownSingleLink(ctx, userId, link.ID, from, to)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	countryBreakdown, err := r.clickLogService.GetTopCountriesSingleLink(ctx, userId, link.ID, from, to)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	devices := responses.MapDeviceBreakdownSingle(deviceBreakdown)
+	countries := responses.MapTopCountriesSingle(countryBreakdown)
+
+	utils.RespondOK(ctx, "successfully get link", responses.MapLinkResponse(link, devices, countries))
 }
 
 // GetLinks godoc
@@ -167,7 +185,7 @@ func (r *linkRoutes) InsertLink(ctx *gin.Context) {
 		return
 	}
 
-	utils.RespondOK(ctx, "successfully insert new link", responses.MapLinkResponse(link))
+	utils.RespondOK(ctx, "successfully insert new link", responses.MapLinkDetailResponse(link))
 }
 
 // Redirect godoc

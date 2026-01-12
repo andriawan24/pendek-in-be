@@ -13,7 +13,7 @@ import (
 )
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at
+SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
 FROM users
 WHERE id = $1 AND deleted_at IS NULL
 `
@@ -31,12 +31,13 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.GoogleID,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at
+SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
 FROM users 
 WHERE email = $1 AND deleted_at IS NULL
 `
@@ -54,6 +55,31 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.GoogleID,
+	)
+	return i, err
+}
+
+const getUserByGoogleID = `-- name: GetUserByGoogleID :one
+SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
+FROM users
+WHERE google_id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByGoogleID, googleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.IsActive,
+		&i.IsVerified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.GoogleID,
 	)
 	return i, err
 }
@@ -68,7 +94,7 @@ INSERT INTO users(
     $2,
     $3
 )
-RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at
+RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
 `
 
 type InsertUserParams struct {
@@ -90,15 +116,55 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.GoogleID,
+	)
+	return i, err
+}
+
+const insertUserWithGoogle = `-- name: InsertUserWithGoogle :one
+INSERT INTO users(
+    name,
+    email,
+    google_id,
+    is_verified
+) VALUES (
+    $1,
+    $2,
+    $3,
+    TRUE
+)
+RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
+`
+
+type InsertUserWithGoogleParams struct {
+	Name     string
+	Email    string
+	GoogleID sql.NullString
+}
+
+func (q *Queries) InsertUserWithGoogle(ctx context.Context, arg InsertUserWithGoogleParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, insertUserWithGoogle, arg.Name, arg.Email, arg.GoogleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.IsActive,
+		&i.IsVerified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.GoogleID,
 	)
 	return i, err
 }
 
 const updateUser = `-- name: UpdateUser :one
-UPDATE users SET 
+UPDATE users SET
 name = $1, email = $2, password_hash = $3, is_verified = $4
 WHERE id = $5 AND deleted_at IS NULL
-RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at
+RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
 `
 
 type UpdateUserParams struct {
@@ -128,6 +194,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.GoogleID,
 	)
 	return i, err
 }

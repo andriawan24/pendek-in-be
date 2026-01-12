@@ -16,7 +16,9 @@ type ClickLogService interface {
 	InsertClickLog(ctx context.Context, param database.InsertClickLogParams) (database.ClickLog, error)
 	GetByDateRange(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetByDateRangeRow, error)
 	GetDeviceBreakdown(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetDeviceBreakdownRow, error)
+	GetDeviceBreakdownSingleLink(ctx context.Context, userId uuid.UUID, linkId uuid.UUID, from time.Time, to time.Time) ([]database.GetDeviceBreakdownSingleRow, error)
 	GetTopCountries(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetTopCountriesRow, error)
+	GetTopCountriesSingleLink(ctx context.Context, userId uuid.UUID, linkId uuid.UUID, from time.Time, to time.Time) ([]database.GetTopCountriesSingleRow, error)
 	GetTrafficSources(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetTrafficSourcesRow, error)
 	GetBrowserUsage(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) ([]database.GetBrowserUsageRow, error)
 }
@@ -99,4 +101,32 @@ func (c *clickLogService) GetBrowserUsage(ctx context.Context, userId uuid.UUID,
 	}
 
 	return browsers, nil
+}
+
+func (c *clickLogService) GetDeviceBreakdownSingleLink(ctx context.Context, userId uuid.UUID, linkId uuid.UUID, from time.Time, to time.Time) ([]database.GetDeviceBreakdownSingleRow, error) {
+	devices, err := c.queries.GetDeviceBreakdownSingle(ctx, database.GetDeviceBreakdownSingleParams{
+		FromDate: from,
+		ToDate:   to,
+		UserID:   userId,
+		ID:       linkId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return devices, nil
+}
+
+func (c *clickLogService) GetTopCountriesSingleLink(ctx context.Context, userId uuid.UUID, linkId uuid.UUID, from time.Time, to time.Time) ([]database.GetTopCountriesSingleRow, error) {
+	countries, err := c.queries.GetTopCountriesSingle(ctx, database.GetTopCountriesSingleParams{
+		FromDate: from,
+		ToDate:   to,
+		UserID:   userId,
+		ID:       linkId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return countries, nil
 }

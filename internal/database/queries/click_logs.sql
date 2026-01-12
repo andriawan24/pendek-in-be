@@ -51,6 +51,16 @@ WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.
 GROUP BY cl.device_type
 ORDER BY total DESC;
 
+-- name: GetDeviceBreakdownSingle :many
+SELECT 
+    COALESCE(cl.device_type, 'Unknown') AS device_type,
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.id = $2
+GROUP BY cl.device_type
+ORDER BY total DESC;
+
 -- name: GetTopCountries :many
 SELECT 
     COALESCE(cl.country, 'Unknown') AS country,
@@ -58,6 +68,17 @@ SELECT
 FROM click_logs cl
 LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
 WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1
+GROUP BY cl.country
+ORDER BY total DESC
+LIMIT 10;
+
+-- name: GetTopCountriesSingle :many
+SELECT 
+    COALESCE(cl.country, 'Unknown') AS country,
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.id = $2
 GROUP BY cl.country
 ORDER BY total DESC
 LIMIT 10;

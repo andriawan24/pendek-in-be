@@ -70,7 +70,33 @@ func MapDeviceBreakdown(rows []database.GetDeviceBreakdownRow) []TypeValue {
 	return result
 }
 
+func MapDeviceBreakdownSingle(rows []database.GetDeviceBreakdownSingleRow) []TypeValue {
+	var result []TypeValue
+
+	for _, item := range rows {
+		result = append(result, TypeValue{
+			Type:  item.DeviceType,
+			Value: item.Total,
+		})
+	}
+
+	return result
+}
+
 func MapTopCountries(rows []database.GetTopCountriesRow) []TypeValue {
+	var result []TypeValue
+
+	for _, item := range rows {
+		result = append(result, TypeValue{
+			Type:  item.Country,
+			Value: item.Total,
+		})
+	}
+
+	return result
+}
+
+func MapTopCountriesSingle(rows []database.GetTopCountriesSingleRow) []TypeValue {
 	var result []TypeValue
 
 	for _, item := range rows {
