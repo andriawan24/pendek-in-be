@@ -185,7 +185,36 @@ func (r *linkRoutes) InsertLink(ctx *gin.Context) {
 		return
 	}
 
-	utils.RespondOK(ctx, "successfully insert new link", responses.MapLinkDetailResponse(link))
+	utils.ResponsdJson(ctx, http.StatusCreated, "successfully insert new link", responses.MapLinkDetailResponse(link))
+}
+
+func (r *linkRoutes) DeleteLink(ctx *gin.Context) {
+	userId := ctx.MustGet("user_id").(uuid.UUID)
+
+	linkId, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	link, err := r.linkService.GetLink(userId, linkId)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	param := database.DeleteLinkParams{
+		UserID: userId,
+		ID:     link.ID,
+	}
+
+	err = r.linkService.DeleteLink(param)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
+	utils.ResponsdJson(ctx, http.StatusNoContent, "successfully insert new link", nil)
 }
 
 // Redirect godoc

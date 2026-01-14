@@ -37,7 +37,7 @@ SELECT
     COUNT(*) AS total_click
 FROM click_logs cl
 LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
-WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.deleted_at IS NULL
 GROUP BY DATE_TRUNC('day', cl.clicked_at)
 ORDER BY date ASC;
 
@@ -47,7 +47,7 @@ SELECT
     COUNT(*) AS total
 FROM click_logs cl
 LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
-WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.deleted_at IS NULL
 GROUP BY cl.device_type
 ORDER BY total DESC;
 
@@ -57,7 +57,7 @@ SELECT
     COUNT(*) AS total
 FROM click_logs cl
 LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
-WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.id = $2
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.id = $2 AND l.deleted_at IS NULL
 GROUP BY cl.device_type
 ORDER BY total DESC;
 
@@ -67,7 +67,7 @@ SELECT
     COUNT(*) AS total
 FROM click_logs cl
 LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
-WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.deleted_at IS NULL
 GROUP BY cl.country
 ORDER BY total DESC
 LIMIT 10;
@@ -78,7 +78,7 @@ SELECT
     COUNT(*) AS total
 FROM click_logs cl
 LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
-WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.id = $2
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.id = $2 AND l.deleted_at IS NULL
 GROUP BY cl.country
 ORDER BY total DESC
 LIMIT 10;
@@ -89,7 +89,7 @@ SELECT
     COUNT(*) AS total
 FROM click_logs cl
 LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
-WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.deleted_at IS NULL
 GROUP BY cl.traffic
 ORDER BY total DESC;
 
@@ -99,6 +99,6 @@ SELECT
     COUNT(*) AS total
 FROM click_logs cl
 LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
-WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1 AND l.deleted_at IS NULL
 GROUP BY cl.browser
 ORDER BY total DESC;

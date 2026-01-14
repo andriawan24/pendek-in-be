@@ -21,6 +21,7 @@ type LinkService interface {
 	GetLink(userId uuid.UUID, id uuid.UUID) (database.Link, error)
 	GetRedirectedLink(shortCode string) (string, error)
 	InsertLink(param database.InsertLinkParams) (database.Link, error)
+	DeleteLink(param database.DeleteLinkParams) error
 }
 
 func NewLinkService(ctx context.Context, queries *database.Queries) LinkService {
@@ -105,4 +106,9 @@ func (l *linkService) GetTotalActiveLinks(userId uuid.UUID) (int64, error) {
 	}
 
 	return count, nil
+}
+
+func (l *linkService) DeleteLink(param database.DeleteLinkParams) error {
+	err := l.queries.DeleteLink(l.ctx, param)
+	return err
 }

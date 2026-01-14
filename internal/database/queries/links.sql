@@ -15,7 +15,7 @@ INSERT INTO links(
 RETURNING *;
 
 -- name: GetRedirectLink :one
-SELECT original_url FROM links WHERE short_code = $1 OR custom_short_code = $1;
+SELECT original_url FROM links WHERE (short_code = $1 OR custom_short_code = $1) AND deleted_at IS NULL;
 
 -- name: GetLink :one
 SELECT * FROM links WHERE user_id = $1 AND deleted_at IS NULL AND id = $2 LIMIT 1;
@@ -34,11 +34,11 @@ ORDER BY
 LIMIT $3
 OFFSET $2;
 
--- name: DeleteLink :exec
-UPDATE links SET deleted_at = NOW() WHERE id = $1;
-
 -- name: UpdateLink :exec
-UPDATE links SET custom_short_code = $1, original_url = $2, expired_at = $3 WHERE id = $1;
+UPDATE links SET custom_short_code = $1, original_url = $2, expired_at = $3 WHERE id = $4 AND deleted_at IS NULL;
 
 -- name: GetTotalActiveLinks :one
 SELECT COUNT(*) as total FROM links l WHERE l.user_id = $1 AND l.deleted_at IS NULL;
+
+-- name: DeleteLink :exec
+UPDATE links SET deleted_at = NOW() WHERE id = $1 AND user_id = $2;

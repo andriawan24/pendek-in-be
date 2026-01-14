@@ -21,6 +21,13 @@ func RespondOK(ctx *gin.Context, message string, data any) {
 	})
 }
 
+func ResponsdJson(ctx *gin.Context, status int, message string, data any) {
+	ctx.JSON(status, responses.BaseResponse{
+		Message: message,
+		Data:    data,
+	})
+}
+
 func RespondUnauthorized(ctx *gin.Context, message string) {
 	respondError(ctx, http.StatusUnauthorized, message, nil)
 }

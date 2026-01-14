@@ -14,11 +14,16 @@ import (
 )
 
 const deleteLink = `-- name: DeleteLink :exec
-UPDATE links SET deleted_at = NOW() WHERE id = $1
+UPDATE links SET deleted_at = NOW() WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteLink(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteLink, id)
+type DeleteLinkParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteLink(ctx context.Context, arg DeleteLinkParams) error {
+	_, err := q.db.ExecContext(ctx, deleteLink, arg.ID, arg.UserID)
 	return err
 }
 
@@ -123,7 +128,7 @@ func (q *Queries) GetLinks(ctx context.Context, arg GetLinksParams) ([]GetLinksR
 }
 
 const getRedirectLink = `-- name: GetRedirectLink :one
-SELECT original_url FROM links WHERE short_code = $1 OR custom_short_code = $1
+SELECT original_url FROM links WHERE (short_code = $1 OR custom_short_code = $1) AND deleted_at IS NULL
 `
 
 func (q *Queries) GetRedirectLink(ctx context.Context, shortCode string) (string, error) {
@@ -193,16 +198,22 @@ func (q *Queries) InsertLink(ctx context.Context, arg InsertLinkParams) (Link, e
 }
 
 const updateLink = `-- name: UpdateLink :exec
-UPDATE links SET custom_short_code = $1, original_url = $2, expired_at = $3 WHERE id = $1
+UPDATE links SET custom_short_code = $1, original_url = $2, expired_at = $3 WHERE id = $4 AND deleted_at IS NULL
 `
 
 type UpdateLinkParams struct {
 	CustomShortCode sql.NullString
 	OriginalUrl     string
 	ExpiredAt       sql.NullTime
+	ID              uuid.UUID
 }
 
 func (q *Queries) UpdateLink(ctx context.Context, arg UpdateLinkParams) error {
-	_, err := q.db.ExecContext(ctx, updateLink, arg.CustomShortCode, arg.OriginalUrl, arg.ExpiredAt)
+	_, err := q.db.ExecContext(ctx, updateLink,
+		arg.CustomShortCode,
+		arg.OriginalUrl,
+		arg.ExpiredAt,
+		arg.ID,
+	)
 	return err
 }

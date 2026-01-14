@@ -184,6 +184,7 @@ func registerRoutes(r *gin.Engine, ctx context.Context, db *sql.DB, queries *dat
 		linkGroup.GET("/all", linkRoutes.GetLinks)
 		linkGroup.GET("/:id", linkRoutes.GetLink)
 		linkGroup.POST("/create", linkRoutes.InsertLink)
+		linkGroup.DELETE("/:id", linkRoutes.DeleteLink)
 	}
 
 	analyticGroup := r.Group("/analytics", middlewares.RequiredAuth())
