@@ -21,15 +21,13 @@ INSERT INTO click_logs (
 RETURNING *;
 
 -- name: GetTotalClicks :one
-WITH click_counts AS (
-    SELECT l.id, COUNT(cl.*) AS total_clicks
-    FROM links l
-    LEFT JOIN click_logs cl ON l.short_code = cl.code OR l.custom_short_code = cl.code
-    WHERE l.user_id = $1 AND l.deleted_at IS NULL AND
-    cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp AND l.user_id = $1
-    GROUP BY l.id
-)
-SELECT COALESCE(SUM(total_clicks), 0) AS total FROM click_counts;
+SELECT 
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN @from_date::timestamp AND @to_date::timestamp
+  AND l.user_id = $1
+  AND l.deleted_at IS NULL;
 
 -- name: GetByDateRange :many
 SELECT 
