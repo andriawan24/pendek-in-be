@@ -3,6 +3,10 @@ package routes
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/andriawan24/link-short/internal/database"
 	"github.com/andriawan24/link-short/internal/models/requests"
@@ -81,11 +85,12 @@ func (r *authRoutes) Login(ctx *gin.Context) {
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiredAt: refreshClaim.ExpiresAt.Time,
 		User: responses.UserResponse{
-			ID:         user.ID,
-			Name:       user.Name,
-			Email:      user.Email,
-			IsActive:   user.IsActive,
-			IsVerified: user.IsVerified,
+			ID:              user.ID,
+			Name:            user.Name,
+			Email:           user.Email,
+			IsActive:        user.IsActive,
+			IsVerified:      user.IsVerified,
+			ProfileImageUrl: user.ProfileImageUrl.String,
 		},
 	}
 
@@ -206,11 +211,12 @@ func (r *authRoutes) Register(ctx *gin.Context) {
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiredAt: refreshClaim.ExpiresAt.Time,
 		User: responses.UserResponse{
-			ID:         user.ID,
-			Name:       user.Name,
-			Email:      user.Email,
-			IsActive:   user.IsActive,
-			IsVerified: user.IsVerified,
+			ID:              user.ID,
+			Name:            user.Name,
+			Email:           user.Email,
+			IsActive:        user.IsActive,
+			IsVerified:      user.IsVerified,
+			ProfileImageUrl: user.ProfileImageUrl.String,
 		},
 	}
 
@@ -238,11 +244,12 @@ func (r *authRoutes) Profile(ctx *gin.Context) {
 	}
 
 	response := responses.UserResponse{
-		ID:         user.ID,
-		Name:       user.Name,
-		Email:      user.Email,
-		IsActive:   user.IsActive,
-		IsVerified: user.IsVerified,
+		ID:              user.ID,
+		Name:            user.Name,
+		Email:           user.Email,
+		IsActive:        user.IsActive,
+		IsVerified:      user.IsVerified,
+		ProfileImageUrl: user.ProfileImageUrl.String,
 	}
 
 	utils.RespondOK(ctx, "successfully get profile", response)
@@ -250,26 +257,21 @@ func (r *authRoutes) Profile(ctx *gin.Context) {
 
 // UpdateProfile godoc
 // @Summary      Update user profile
-// @Description  Update current authenticated user profile
+// @Description  Update current authenticated user profile with optional profile image upload
 // @Tags         Auth
-// @Accept       json
+// @Accept       multipart/form-data
 // @Produce      json
 // @Security     BearerAuth
-// @Param        request body requests.UpdateProfileParam true "Profile update details"
+// @Param        name formData string false "User name"
+// @Param        email formData string false "User email"
+// @Param        password formData string false "User password"
+// @Param        profile_image formData file false "Profile image file (jpg, jpeg, png, gif)"
 // @Success      200  {object}  responses.BaseResponse{data=responses.UserResponse}
 // @Failure      400  {object}  responses.ErrorResponse
 // @Failure      401  {object}  responses.ErrorResponse
 // @Failure      500  {object}  responses.ErrorResponse
 // @Router       /auth/update-profile [put]
 func (r *authRoutes) UpdateProfile(ctx *gin.Context) {
-	var param requests.UpdateProfileParam
-
-	err := ctx.ShouldBindJSON(&param)
-	if err != nil {
-		utils.HandleErrorResponse(ctx, err)
-		return
-	}
-
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 	user, err := r.userService.GetUserByID(userId)
 	if err != nil {
@@ -277,31 +279,68 @@ func (r *authRoutes) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 
-	if param.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(param.Password), bcrypt.DefaultCost)
+	name := ctx.PostForm("name")
+	email := ctx.PostForm("email")
+	password := ctx.PostForm("password")
+
+	if password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			utils.HandleErrorResponse(ctx, err)
 			return
 		}
-
 		user.PasswordHash.String = string(hashedPassword)
 	}
 
-	if param.Name != "" {
-		user.Name = param.Name
+	if name != "" {
+		user.Name = name
 	}
 
-	if param.Email != "" && param.Email != user.Email {
-		user.Email = param.Email
+	if email != "" && email != user.Email {
+		user.Email = email
 		user.IsVerified = false
 	}
 
+	file, err := ctx.FormFile("profile_image")
+	if err == nil && file != nil {
+		ext := strings.ToLower(filepath.Ext(file.Filename))
+		allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true}
+		if !allowedExts[ext] {
+			utils.RespondBadRequest(ctx, "invalid file type. Allowed: jpg, jpeg, png, gif")
+			return
+		}
+
+		const maxFileSize = 5 << 20 // 5MB
+		if file.Size > maxFileSize {
+			utils.RespondBadRequest(ctx, "file size exceeds 5MB limit")
+			return
+		}
+
+		uploadDir := "uploads/profiles"
+		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+			utils.HandleErrorResponse(ctx, err)
+			return
+		}
+
+		filename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+		filePath := filepath.Join(uploadDir, filename)
+
+		if err := ctx.SaveUploadedFile(file, filePath); err != nil {
+			utils.HandleErrorResponse(ctx, err)
+			return
+		}
+
+		user.ProfileImageUrl.String = "/" + filePath
+		user.ProfileImageUrl.Valid = true
+	}
+
 	updateUserParam := database.UpdateUserParams{
-		ID:           userId,
-		Name:         user.Name,
-		Email:        user.Email,
-		PasswordHash: user.PasswordHash,
-		IsVerified:   user.IsVerified,
+		ID:              userId,
+		Name:            user.Name,
+		Email:           user.Email,
+		PasswordHash:    user.PasswordHash,
+		IsVerified:      user.IsVerified,
+		ProfileImageUrl: user.ProfileImageUrl,
 	}
 
 	updatedUser, err := r.userService.UpdateUser(updateUserParam)
@@ -311,11 +350,12 @@ func (r *authRoutes) UpdateProfile(ctx *gin.Context) {
 	}
 
 	response := responses.UserResponse{
-		ID:         updatedUser.ID,
-		Name:       updatedUser.Name,
-		Email:      updatedUser.Email,
-		IsActive:   updatedUser.IsActive,
-		IsVerified: updatedUser.IsVerified,
+		ID:              updatedUser.ID,
+		Name:            updatedUser.Name,
+		Email:           updatedUser.Email,
+		IsActive:        updatedUser.IsActive,
+		IsVerified:      updatedUser.IsVerified,
+		ProfileImageUrl: updatedUser.ProfileImageUrl.String,
 	}
 
 	utils.RespondOK(ctx, "successfully update profile", response)
@@ -362,6 +402,10 @@ func (r *authRoutes) GoogleAuth(ctx *gin.Context) {
 					String: googleUser.ID,
 					Valid:  true,
 				},
+				ProfileImageUrl: sql.NullString{
+					String: googleUser.Picture,
+					Valid:  googleUser.Picture != "",
+				},
 			}
 
 			user, err = r.userService.InsertUserWithGoogle(insertParam)
@@ -393,11 +437,12 @@ func (r *authRoutes) GoogleAuth(ctx *gin.Context) {
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiredAt: refreshClaim.ExpiresAt.Time,
 		User: responses.UserResponse{
-			ID:         user.ID,
-			Name:       user.Name,
-			Email:      user.Email,
-			IsActive:   user.IsActive,
-			IsVerified: user.IsVerified,
+			ID:              user.ID,
+			Name:            user.Name,
+			Email:           user.Email,
+			IsActive:        user.IsActive,
+			IsVerified:      user.IsVerified,
+			ProfileImageUrl: user.ProfileImageUrl.String,
 		},
 	}
 

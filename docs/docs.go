@@ -430,9 +430,9 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update current authenticated user profile",
+                "description": "Update current authenticated user profile with optional profile image upload",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -443,13 +443,28 @@ const docTemplate = `{
                 "summary": "Update user profile",
                 "parameters": [
                     {
-                        "description": "Profile update details",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/requests.UpdateProfileParam"
-                        }
+                        "type": "string",
+                        "description": "User name",
+                        "name": "name",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User password",
+                        "name": "password",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Profile image file (jpg, jpeg, png, gif)",
+                        "name": "profile_image",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -876,20 +891,6 @@ const docTemplate = `{
                 }
             }
         },
-        "requests.UpdateProfileParam": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
         "responses.AnalyticOverview": {
             "type": "object",
             "properties": {
@@ -1103,6 +1104,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "profile_image_url": {
                     "type": "string"
                 }
             }

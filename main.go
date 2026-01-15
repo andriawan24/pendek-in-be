@@ -193,6 +193,8 @@ func registerRoutes(r *gin.Engine, ctx context.Context, db *sql.DB, queries *dat
 		analyticGroup.GET("/", analyticRoutes.GetAnalytics)
 	}
 
+	r.Static("/uploads", "./uploads")
+
 	r.GET("/:code", linkRoutes.Redirect)
 	r.GET("/health", healthCheckHandler(db))
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

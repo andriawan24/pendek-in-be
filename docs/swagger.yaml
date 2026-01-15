@@ -41,15 +41,6 @@ definitions:
     - name
     - password
     type: object
-  requests.UpdateProfileParam:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-    type: object
   responses.AnalyticOverview:
     properties:
       date:
@@ -190,6 +181,8 @@ definitions:
       is_verified:
         type: boolean
       name:
+        type: string
+      profile_image_url:
         type: string
     type: object
 host: localhost:8080
@@ -475,15 +468,26 @@ paths:
   /auth/update-profile:
     put:
       consumes:
-      - application/json
-      description: Update current authenticated user profile
+      - multipart/form-data
+      description: Update current authenticated user profile with optional profile
+        image upload
       parameters:
-      - description: Profile update details
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/requests.UpdateProfileParam'
+      - description: User name
+        in: formData
+        name: name
+        type: string
+      - description: User email
+        in: formData
+        name: email
+        type: string
+      - description: User password
+        in: formData
+        name: password
+        type: string
+      - description: Profile image file (jpg, jpeg, png, gif)
+        in: formData
+        name: profile_image
+        type: file
       produces:
       - application/json
       responses:

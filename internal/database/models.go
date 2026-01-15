@@ -47,14 +47,15 @@ type RefreshToken struct {
 }
 
 type User struct {
-	ID           uuid.UUID
-	Name         string
-	Email        string
-	PasswordHash sql.NullString
-	IsActive     bool
-	IsVerified   bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    sql.NullTime
-	GoogleID     sql.NullString
+	ID              uuid.UUID
+	Name            string
+	Email           string
+	PasswordHash    sql.NullString
+	IsActive        bool
+	IsVerified      bool
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       sql.NullTime
+	GoogleID        sql.NullString
+	ProfileImageUrl sql.NullString
 }

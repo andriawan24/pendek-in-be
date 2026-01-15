@@ -13,7 +13,7 @@ import (
 )
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
+SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id, profile_image_url
 FROM users
 WHERE id = $1 AND deleted_at IS NULL
 `
@@ -32,12 +32,13 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.GoogleID,
+		&i.ProfileImageUrl,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
+SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id, profile_image_url
 FROM users 
 WHERE email = $1 AND deleted_at IS NULL
 `
@@ -56,12 +57,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.GoogleID,
+		&i.ProfileImageUrl,
 	)
 	return i, err
 }
 
 const getUserByGoogleID = `-- name: GetUserByGoogleID :one
-SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
+SELECT id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id, profile_image_url
 FROM users
 WHERE google_id = $1 AND deleted_at IS NULL
 `
@@ -80,6 +82,7 @@ func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.GoogleID,
+		&i.ProfileImageUrl,
 	)
 	return i, err
 }
@@ -94,7 +97,7 @@ INSERT INTO users(
     $2,
     $3
 )
-RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
+RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id, profile_image_url
 `
 
 type InsertUserParams struct {
@@ -117,6 +120,7 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, e
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.GoogleID,
+		&i.ProfileImageUrl,
 	)
 	return i, err
 }
@@ -126,24 +130,32 @@ INSERT INTO users(
     name,
     email,
     google_id,
-    is_verified
+    is_verified,
+    profile_image_url
 ) VALUES (
     $1,
     $2,
     $3,
-    TRUE
+    TRUE,
+    $4
 )
-RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
+RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id, profile_image_url
 `
 
 type InsertUserWithGoogleParams struct {
-	Name     string
-	Email    string
-	GoogleID sql.NullString
+	Name            string
+	Email           string
+	GoogleID        sql.NullString
+	ProfileImageUrl sql.NullString
 }
 
 func (q *Queries) InsertUserWithGoogle(ctx context.Context, arg InsertUserWithGoogleParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, insertUserWithGoogle, arg.Name, arg.Email, arg.GoogleID)
+	row := q.db.QueryRowContext(ctx, insertUserWithGoogle,
+		arg.Name,
+		arg.Email,
+		arg.GoogleID,
+		arg.ProfileImageUrl,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -156,23 +168,25 @@ func (q *Queries) InsertUserWithGoogle(ctx context.Context, arg InsertUserWithGo
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.GoogleID,
+		&i.ProfileImageUrl,
 	)
 	return i, err
 }
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users SET
-name = $1, email = $2, password_hash = $3, is_verified = $4
-WHERE id = $5 AND deleted_at IS NULL
-RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id
+name = $1, email = $2, password_hash = $3, is_verified = $4, profile_image_url = $5
+WHERE id = $6 AND deleted_at IS NULL
+RETURNING id, name, email, password_hash, is_active, is_verified, created_at, updated_at, deleted_at, google_id, profile_image_url
 `
 
 type UpdateUserParams struct {
-	Name         string
-	Email        string
-	PasswordHash sql.NullString
-	IsVerified   bool
-	ID           uuid.UUID
+	Name            string
+	Email           string
+	PasswordHash    sql.NullString
+	IsVerified      bool
+	ProfileImageUrl sql.NullString
+	ID              uuid.UUID
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
@@ -181,6 +195,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.Email,
 		arg.PasswordHash,
 		arg.IsVerified,
+		arg.ProfileImageUrl,
 		arg.ID,
 	)
 	var i User
@@ -195,6 +210,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.GoogleID,
+		&i.ProfileImageUrl,
 	)
 	return i, err
 }

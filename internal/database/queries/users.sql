@@ -22,8 +22,8 @@ RETURNING *;
 
 -- name: UpdateUser :one
 UPDATE users SET
-name = $1, email = $2, password_hash = $3, is_verified = $4
-WHERE id = $5 AND deleted_at IS NULL
+name = $1, email = $2, password_hash = $3, is_verified = $4, profile_image_url = $5
+WHERE id = $6 AND deleted_at IS NULL
 RETURNING *;
 
 -- name: GetUserByGoogleID :one
@@ -36,11 +36,13 @@ INSERT INTO users(
     name,
     email,
     google_id,
-    is_verified
+    is_verified,
+    profile_image_url
 ) VALUES (
     $1,
     $2,
     $3,
-    TRUE
+    TRUE,
+    $4
 )
 RETURNING *;

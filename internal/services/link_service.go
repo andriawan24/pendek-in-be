@@ -91,12 +91,7 @@ func (l *linkService) GetTotalCounts(userId uuid.UUID, from time.Time, to time.T
 		return 0, err
 	}
 
-	total, ok := count.(int64)
-	if !ok {
-		return 0, nil
-	}
-
-	return total, nil
+	return count, nil
 }
 
 func (l *linkService) GetTotalActiveLinks(userId uuid.UUID) (int64, error) {

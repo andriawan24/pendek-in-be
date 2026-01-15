@@ -7,11 +7,12 @@ import (
 )
 
 type UserResponse struct {
-	ID         uuid.UUID `json:"id"`
-	Name       string    `json:"name"`
-	Email      string    `json:"email"`
-	IsActive   bool      `json:"is_active"`
-	IsVerified bool      `json:"is_verified"`
+	ID              uuid.UUID `json:"id"`
+	Name            string    `json:"name"`
+	Email           string    `json:"email"`
+	IsActive        bool      `json:"is_active"`
+	IsVerified      bool      `json:"is_verified"`
+	ProfileImageUrl string    `json:"profile_image_url"`
 }
 
 type LoginResponse struct {

@@ -32,6 +32,10 @@ func RespondUnauthorized(ctx *gin.Context, message string) {
 	respondError(ctx, http.StatusUnauthorized, message, nil)
 }
 
+func RespondBadRequest(ctx *gin.Context, message string) {
+	respondError(ctx, http.StatusBadRequest, message, nil)
+}
+
 func respondError(ctx *gin.Context, status int, message string, err any) {
 	ctx.JSON(status, responses.ErrorResponse{
 		Message: message,

@@ -298,15 +298,13 @@ func (q *Queries) GetTopCountriesSingle(ctx context.Context, arg GetTopCountries
 }
 
 const getTotalClicks = `-- name: GetTotalClicks :one
-WITH click_counts AS (
-    SELECT l.id, COUNT(cl.*) AS total_clicks
-    FROM links l
-    LEFT JOIN click_logs cl ON l.short_code = cl.code OR l.custom_short_code = cl.code
-    WHERE l.user_id = $1 AND l.deleted_at IS NULL AND
-    cl.clicked_at BETWEEN $2::timestamp AND $3::timestamp AND l.user_id = $1
-    GROUP BY l.id
-)
-SELECT COALESCE(SUM(total_clicks), 0) AS total FROM click_counts
+SELECT 
+    COUNT(*) AS total
+FROM click_logs cl
+LEFT JOIN links l ON l.short_code = cl.code OR l.custom_short_code = cl.code
+WHERE cl.clicked_at BETWEEN $2::timestamp AND $3::timestamp
+  AND l.user_id = $1
+  AND l.deleted_at IS NULL
 `
 
 type GetTotalClicksParams struct {
@@ -315,9 +313,9 @@ type GetTotalClicksParams struct {
 	ToDate   time.Time
 }
 
-func (q *Queries) GetTotalClicks(ctx context.Context, arg GetTotalClicksParams) (interface{}, error) {
+func (q *Queries) GetTotalClicks(ctx context.Context, arg GetTotalClicksParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getTotalClicks, arg.UserID, arg.FromDate, arg.ToDate)
-	var total interface{}
+	var total int64
 	err := row.Scan(&total)
 	return total, err
 }
