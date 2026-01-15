@@ -188,6 +188,18 @@ func (r *linkRoutes) InsertLink(ctx *gin.Context) {
 	utils.ResponsdJson(ctx, http.StatusCreated, "successfully insert new link", responses.MapLinkDetailResponse(link))
 }
 
+// DeleteLink godoc
+// @Summary      Delete an existing link
+// @Description  Delete a shortened link by its ID
+// @Tags         Links
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Link ID (UUID)"
+// @Success      204  {string}  string  "No Content"
+// @Failure      400  {object}  responses.ErrorResponse
+// @Failure      401  {object}  responses.ErrorResponse
+// @Failure      404  {object}  responses.ErrorResponse
+// @Failure      500  {object}  responses.ErrorResponse
+// @Router       /links/{id} [delete]
 func (r *linkRoutes) DeleteLink(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 
