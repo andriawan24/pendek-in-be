@@ -47,7 +47,7 @@ func MapLinkResponses(links []database.GetLinksRow) []LinkResponse {
 	return response
 }
 
-func MapLinkResponse(link database.Link, devices []TypeValue, countries []TypeValue) LinkResponse {
+func MapLinkResponse(link database.GetLinkRow, totalClicks int64, devices []TypeValue, countries []TypeValue) LinkResponse {
 	var customShortCode *string = nil
 	if link.CustomShortCode.Valid {
 		customShortCode = &link.CustomShortCode.String
@@ -65,6 +65,7 @@ func MapLinkResponse(link database.Link, devices []TypeValue, countries []TypeVa
 		CustomShortCode:  customShortCode,
 		ExpiredAt:        expiredAt,
 		CreatedAt:        link.CreatedAt,
+		ClickCount:       totalClicks,
 		DeviceBreakdowns: devices,
 		TopCountries:     countries,
 	}

@@ -64,6 +64,12 @@ func (r *linkRoutes) GetLink(ctx *gin.Context) {
 	to := time.Now()
 	from := time.Time{}
 
+	totalClicks, err := r.linkService.GetTotalCounts(userId, from, to)
+	if err != nil {
+		utils.HandleErrorResponse(ctx, err)
+		return
+	}
+
 	deviceBreakdown, err := r.clickLogService.GetDeviceBreakdownSingleLink(ctx, userId, link.ID, from, to)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
@@ -79,7 +85,7 @@ func (r *linkRoutes) GetLink(ctx *gin.Context) {
 	devices := responses.MapDeviceBreakdownSingle(deviceBreakdown)
 	countries := responses.MapTopCountriesSingle(countryBreakdown)
 
-	utils.RespondOK(ctx, "successfully get link", responses.MapLinkResponse(link, devices, countries))
+	utils.RespondOK(ctx, "successfully get link", responses.MapLinkResponse(link, totalClicks, devices, countries))
 }
 
 // GetLinks godoc

@@ -18,7 +18,7 @@ type LinkService interface {
 	GetTotalCounts(userId uuid.UUID, from time.Time, to time.Time) (int64, error)
 	GetTotalActiveLinks(userId uuid.UUID) (int64, error)
 	GetLinks(userId uuid.UUID, limit int32, offset int32, orderBy utils.LinkOrderBy) ([]database.GetLinksRow, error)
-	GetLink(userId uuid.UUID, id uuid.UUID) (database.Link, error)
+	GetLink(userId uuid.UUID, id uuid.UUID) (database.GetLinkRow, error)
 	GetRedirectedLink(shortCode string) (string, error)
 	InsertLink(param database.InsertLinkParams) (database.Link, error)
 	DeleteLink(param database.DeleteLinkParams) error
@@ -31,7 +31,7 @@ func NewLinkService(ctx context.Context, queries *database.Queries) LinkService 
 	}
 }
 
-func (l *linkService) GetLink(userId uuid.UUID, id uuid.UUID) (database.Link, error) {
+func (l *linkService) GetLink(userId uuid.UUID, id uuid.UUID) (database.GetLinkRow, error) {
 	param := database.GetLinkParams{
 		UserID: userId,
 		ID:     id,

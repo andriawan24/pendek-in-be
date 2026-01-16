@@ -28,7 +28,11 @@ func (q *Queries) DeleteLink(ctx context.Context, arg DeleteLinkParams) error {
 }
 
 const getLink = `-- name: GetLink :one
-SELECT id, original_url, short_code, custom_short_code, user_id, expired_at, created_at, updated_at, deleted_at FROM links WHERE user_id = $1 AND deleted_at IS NULL AND id = $2 LIMIT 1
+SELECT l.id, l.original_url, l.short_code, l.custom_short_code, l.user_id, l.expired_at, l.created_at, l.updated_at, l.deleted_at, COUNT(cl.id) as counts FROM links l
+LEFT JOIN click_logs cl ON cl.code = l.short_code OR cl.code = l.custom_short_code
+WHERE l.user_id = $1 AND deleted_at IS NULL AND l.id = $2 
+GROUP BY l.id
+LIMIT 1
 `
 
 type GetLinkParams struct {
@@ -36,9 +40,22 @@ type GetLinkParams struct {
 	ID     uuid.UUID
 }
 
-func (q *Queries) GetLink(ctx context.Context, arg GetLinkParams) (Link, error) {
+type GetLinkRow struct {
+	ID              uuid.UUID
+	OriginalUrl     string
+	ShortCode       string
+	CustomShortCode sql.NullString
+	UserID          uuid.UUID
+	ExpiredAt       sql.NullTime
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       sql.NullTime
+	Counts          int64
+}
+
+func (q *Queries) GetLink(ctx context.Context, arg GetLinkParams) (GetLinkRow, error) {
 	row := q.db.QueryRowContext(ctx, getLink, arg.UserID, arg.ID)
-	var i Link
+	var i GetLinkRow
 	err := row.Scan(
 		&i.ID,
 		&i.OriginalUrl,
@@ -49,6 +66,7 @@ func (q *Queries) GetLink(ctx context.Context, arg GetLinkParams) (Link, error) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.Counts,
 	)
 	return i, err
 }

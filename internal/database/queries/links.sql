@@ -18,7 +18,11 @@ RETURNING *;
 SELECT original_url FROM links WHERE (short_code = $1 OR custom_short_code = $1) AND deleted_at IS NULL;
 
 -- name: GetLink :one
-SELECT * FROM links WHERE user_id = $1 AND deleted_at IS NULL AND id = $2 LIMIT 1;
+SELECT l.*, COUNT(cl.id) as counts FROM links l
+LEFT JOIN click_logs cl ON cl.code = l.short_code OR cl.code = l.custom_short_code
+WHERE l.user_id = $1 AND deleted_at IS NULL AND l.id = $2 
+GROUP BY l.id
+LIMIT 1;
 
 -- name: GetLinks :many
 SELECT l.*, COUNT(cl.id) as counts 
