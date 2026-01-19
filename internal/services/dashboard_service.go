@@ -8,35 +8,33 @@ import (
 )
 
 type dashboardService struct {
-	ctx     context.Context
 	queries *database.Queries
 }
 
 type DashboardService interface {
-	GetLandingStats() (responses.LandingStatsResponse, error)
+	GetLandingStats(ctx context.Context) (responses.LandingStatsResponse, error)
 }
 
-func NewDashboardService(ctx context.Context, queries *database.Queries) DashboardService {
+func NewDashboardService(queries *database.Queries) DashboardService {
 	return &dashboardService{
-		ctx:     ctx,
 		queries: queries,
 	}
 }
 
-func (s *dashboardService) GetLandingStats() (responses.LandingStatsResponse, error) {
+func (s *dashboardService) GetLandingStats(ctx context.Context) (responses.LandingStatsResponse, error) {
 	var stats responses.LandingStatsResponse
 
-	totalLinks, err := s.queries.GetTotalLinksCreated(s.ctx)
+	totalLinks, err := s.queries.GetTotalLinksCreated(ctx)
 	if err != nil {
 		return stats, err
 	}
 
-	totalUsers, err := s.queries.GetTotalActiveUsers(s.ctx)
+	totalUsers, err := s.queries.GetTotalActiveUsers(ctx)
 	if err != nil {
 		return stats, err
 	}
 
-	totalClicks, err := s.queries.GetGlobalTotalClicks(s.ctx)
+	totalClicks, err := s.queries.GetGlobalTotalClicks(ctx)
 	if err != nil {
 		return stats, err
 	}

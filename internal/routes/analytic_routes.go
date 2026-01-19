@@ -39,19 +39,19 @@ func (r *analyticRoutes) GetDashboard(ctx *gin.Context) {
 	from := time.Time{}
 	to := time.Now()
 
-	totalClicks, err := r.linkService.GetTotalCounts(userId, from, to)
+	totalClicks, err := r.linkService.GetTotalCounts(ctx.Request.Context(), userId, from, to)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
 	}
 
-	totalActiveLinks, err := r.linkService.GetTotalActiveLinks(userId)
+	totalActiveLinks, err := r.linkService.GetTotalActiveLinks(ctx.Request.Context(), userId)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
 	}
 
-	topLinks, err := r.linkService.GetLinks(userId, 1, 0, utils.OrderByCounts)
+	topLinks, err := r.linkService.GetLinks(ctx.Request.Context(), userId, 1, 0, utils.OrderByCounts)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -63,7 +63,7 @@ func (r *analyticRoutes) GetDashboard(ctx *gin.Context) {
 		return
 	}
 
-	recents, err := r.linkService.GetLinks(userId, 5, 0, utils.OrderByCreatedDate)
+	recents, err := r.linkService.GetLinks(ctx.Request.Context(), userId, 5, 0, utils.OrderByCreatedDate)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -115,19 +115,19 @@ func (r *analyticRoutes) GetAnalytics(ctx *gin.Context) {
 		return
 	}
 
-	totalClicks, err := r.linkService.GetTotalCounts(userId, from, to)
+	totalClicks, err := r.linkService.GetTotalCounts(ctx.Request.Context(), userId, from, to)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
 	}
 
-	totalActiveLinks, err := r.linkService.GetTotalActiveLinks(userId)
+	totalActiveLinks, err := r.linkService.GetTotalActiveLinks(ctx.Request.Context(), userId)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
 	}
 
-	topLinks, err := r.linkService.GetLinks(userId, 1, 0, utils.OrderByCounts)
+	topLinks, err := r.linkService.GetLinks(ctx.Request.Context(), userId, 1, 0, utils.OrderByCounts)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return

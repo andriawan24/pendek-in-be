@@ -159,12 +159,12 @@ func parseAllowedOrigins() []string {
 }
 
 func registerRoutes(r *gin.Engine, ctx context.Context, db *sql.DB, queries *database.Queries, rdb *redis.Client) {
-	userService := services.NewUserService(ctx, queries)
-	linkService := services.NewLinkService(ctx, queries)
+	userService := services.NewUserService(queries)
+	linkService := services.NewLinkService(queries)
 	cacheService := services.NewCacheService(rdb)
 	clickLogService := services.NewClickLogService(queries)
 	oauthService := services.NewOAuthService()
-	dashboardService := services.NewDashboardService(ctx, queries)
+	dashboardService := services.NewDashboardService(queries)
 
 	linkRoutes := routes.NewLinkRoutes(linkService, clickLogService, cacheService)
 	authRoutes := routes.NewAuthRoutes(userService, oauthService)

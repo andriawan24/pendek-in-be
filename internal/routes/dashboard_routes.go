@@ -26,7 +26,7 @@ func NewDashboardRoutes(dashboardService services.DashboardService) dashboardRou
 // @Failure      500  {object}  responses.ErrorResponse
 // @Router       /dashboard/stats [get]
 func (r *dashboardRoutes) GetLandingStats(ctx *gin.Context) {
-	stats, err := r.dashboardService.GetLandingStats()
+	stats, err := r.dashboardService.GetLandingStats(ctx.Request.Context())
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return

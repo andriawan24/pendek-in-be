@@ -10,34 +10,32 @@ import (
 )
 
 type linkService struct {
-	ctx     context.Context
 	queries *database.Queries
 }
 
 type LinkService interface {
-	GetTotalCounts(userId uuid.UUID, from time.Time, to time.Time) (int64, error)
-	GetTotalActiveLinks(userId uuid.UUID) (int64, error)
-	GetLinks(userId uuid.UUID, limit int32, offset int32, orderBy utils.LinkOrderBy) ([]database.GetLinksRow, error)
-	GetLink(userId uuid.UUID, id uuid.UUID) (database.GetLinkRow, error)
-	GetRedirectedLink(shortCode string) (string, error)
-	InsertLink(param database.InsertLinkParams) (database.Link, error)
-	DeleteLink(param database.DeleteLinkParams) error
+	GetTotalCounts(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) (int64, error)
+	GetTotalActiveLinks(ctx context.Context, userId uuid.UUID) (int64, error)
+	GetLinks(ctx context.Context, userId uuid.UUID, limit int32, offset int32, orderBy utils.LinkOrderBy) ([]database.GetLinksRow, error)
+	GetLink(ctx context.Context, userId uuid.UUID, id uuid.UUID) (database.GetLinkRow, error)
+	GetRedirectedLink(ctx context.Context, shortCode string) (string, error)
+	InsertLink(ctx context.Context, param database.InsertLinkParams) (database.Link, error)
+	DeleteLink(ctx context.Context, param database.DeleteLinkParams) error
 }
 
-func NewLinkService(ctx context.Context, queries *database.Queries) LinkService {
+func NewLinkService(queries *database.Queries) LinkService {
 	return &linkService{
-		ctx:     ctx,
 		queries: queries,
 	}
 }
 
-func (l *linkService) GetLink(userId uuid.UUID, id uuid.UUID) (database.GetLinkRow, error) {
+func (l *linkService) GetLink(ctx context.Context, userId uuid.UUID, id uuid.UUID) (database.GetLinkRow, error) {
 	param := database.GetLinkParams{
 		UserID: userId,
 		ID:     id,
 	}
 
-	link, err := l.queries.GetLink(l.ctx, param)
+	link, err := l.queries.GetLink(ctx, param)
 	if err != nil {
 		return link, err
 	}
@@ -45,7 +43,7 @@ func (l *linkService) GetLink(userId uuid.UUID, id uuid.UUID) (database.GetLinkR
 	return link, nil
 }
 
-func (l *linkService) GetLinks(userId uuid.UUID, limit int32, offset int32, orderBy utils.LinkOrderBy) ([]database.GetLinksRow, error) {
+func (l *linkService) GetLinks(ctx context.Context, userId uuid.UUID, limit int32, offset int32, orderBy utils.LinkOrderBy) ([]database.GetLinksRow, error) {
 	param := database.GetLinksParams{
 		UserID:  userId,
 		Limit:   limit,
@@ -53,7 +51,7 @@ func (l *linkService) GetLinks(userId uuid.UUID, limit int32, offset int32, orde
 		OrderBy: orderBy.GetString(),
 	}
 
-	links, err := l.queries.GetLinks(l.ctx, param)
+	links, err := l.queries.GetLinks(ctx, param)
 	if err != nil {
 		return links, err
 	}
@@ -61,8 +59,8 @@ func (l *linkService) GetLinks(userId uuid.UUID, limit int32, offset int32, orde
 	return links, nil
 }
 
-func (l *linkService) GetRedirectedLink(shortCode string) (string, error) {
-	link, err := l.queries.GetRedirectLink(l.ctx, shortCode)
+func (l *linkService) GetRedirectedLink(ctx context.Context, shortCode string) (string, error) {
+	link, err := l.queries.GetRedirectLink(ctx, shortCode)
 	if err != nil {
 		return link, err
 	}
@@ -70,8 +68,8 @@ func (l *linkService) GetRedirectedLink(shortCode string) (string, error) {
 	return link, nil
 }
 
-func (l *linkService) InsertLink(param database.InsertLinkParams) (database.Link, error) {
-	link, err := l.queries.InsertLink(l.ctx, param)
+func (l *linkService) InsertLink(ctx context.Context, param database.InsertLinkParams) (database.Link, error) {
+	link, err := l.queries.InsertLink(ctx, param)
 	if err != nil {
 		return link, err
 	}
@@ -79,14 +77,14 @@ func (l *linkService) InsertLink(param database.InsertLinkParams) (database.Link
 	return link, nil
 }
 
-func (l *linkService) GetTotalCounts(userId uuid.UUID, from time.Time, to time.Time) (int64, error) {
+func (l *linkService) GetTotalCounts(ctx context.Context, userId uuid.UUID, from time.Time, to time.Time) (int64, error) {
 	param := database.GetTotalClicksParams{
 		UserID:   userId,
 		FromDate: from,
 		ToDate:   to,
 	}
 
-	count, err := l.queries.GetTotalClicks(l.ctx, param)
+	count, err := l.queries.GetTotalClicks(ctx, param)
 	if err != nil {
 		return 0, err
 	}
@@ -94,8 +92,8 @@ func (l *linkService) GetTotalCounts(userId uuid.UUID, from time.Time, to time.T
 	return count, nil
 }
 
-func (l *linkService) GetTotalActiveLinks(userId uuid.UUID) (int64, error) {
-	count, err := l.queries.GetTotalActiveLinks(l.ctx, userId)
+func (l *linkService) GetTotalActiveLinks(ctx context.Context, userId uuid.UUID) (int64, error) {
+	count, err := l.queries.GetTotalActiveLinks(ctx, userId)
 	if err != nil {
 		return count, err
 	}
@@ -103,7 +101,7 @@ func (l *linkService) GetTotalActiveLinks(userId uuid.UUID) (int64, error) {
 	return count, nil
 }
 
-func (l *linkService) DeleteLink(param database.DeleteLinkParams) error {
-	err := l.queries.DeleteLink(l.ctx, param)
+func (l *linkService) DeleteLink(ctx context.Context, param database.DeleteLinkParams) error {
+	err := l.queries.DeleteLink(ctx, param)
 	return err
 }

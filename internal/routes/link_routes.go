@@ -55,7 +55,7 @@ func (r *linkRoutes) GetLink(ctx *gin.Context) {
 		return
 	}
 
-	link, err := r.linkService.GetLink(userId, linkId)
+	link, err := r.linkService.GetLink(ctx.Request.Context(), userId, linkId)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -64,7 +64,7 @@ func (r *linkRoutes) GetLink(ctx *gin.Context) {
 	to := time.Now()
 	from := time.Time{}
 
-	totalClicks, err := r.linkService.GetTotalCounts(userId, from, to)
+	totalClicks, err := r.linkService.GetTotalCounts(ctx.Request.Context(), userId, from, to)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -138,7 +138,7 @@ func (r *linkRoutes) GetLinks(ctx *gin.Context) {
 
 	offset := (page - 1) * limit
 
-	links, err := r.linkService.GetLinks(userId, int32(limit), int32(offset), orderBy)
+	links, err := r.linkService.GetLinks(ctx.Request.Context(), userId, int32(limit), int32(offset), orderBy)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -185,7 +185,7 @@ func (r *linkRoutes) InsertLink(ctx *gin.Context) {
 		},
 	}
 
-	link, err := r.linkService.InsertLink(param)
+	link, err := r.linkService.InsertLink(ctx.Request.Context(), param)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -215,7 +215,7 @@ func (r *linkRoutes) DeleteLink(ctx *gin.Context) {
 		return
 	}
 
-	link, err := r.linkService.GetLink(userId, linkId)
+	link, err := r.linkService.GetLink(ctx.Request.Context(), userId, linkId)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -226,7 +226,7 @@ func (r *linkRoutes) DeleteLink(ctx *gin.Context) {
 		ID:     link.ID,
 	}
 
-	err = r.linkService.DeleteLink(param)
+	err = r.linkService.DeleteLink(ctx.Request.Context(), param)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -298,7 +298,7 @@ func (r *linkRoutes) Redirect(ctx *gin.Context) {
 		return
 	}
 
-	originalURL, err = r.linkService.GetRedirectedLink(code)
+	originalURL, err = r.linkService.GetRedirectedLink(reqCtx, code)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return

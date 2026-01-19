@@ -9,30 +9,28 @@ import (
 )
 
 type userService struct {
-	ctx     context.Context
 	queries *database.Queries
 }
 
 type UserService interface {
-	GetUserByID(id uuid.UUID) (database.User, error)
-	FindUserByEmail(email string) (database.User, error)
-	FindUserByGoogleID(googleID string) (database.User, error)
-	InsertUser(param database.InsertUserParams) (database.User, error)
-	InsertUserWithGoogle(param database.InsertUserWithGoogleParams) (database.User, error)
-	UpdateUser(param database.UpdateUserParams) (database.User, error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (database.User, error)
+	FindUserByEmail(ctx context.Context, email string) (database.User, error)
+	FindUserByGoogleID(ctx context.Context, googleID string) (database.User, error)
+	InsertUser(ctx context.Context, param database.InsertUserParams) (database.User, error)
+	InsertUserWithGoogle(ctx context.Context, param database.InsertUserWithGoogleParams) (database.User, error)
+	UpdateUser(ctx context.Context, param database.UpdateUserParams) (database.User, error)
 }
 
-func NewUserService(ctx context.Context, queries *database.Queries) UserService {
+func NewUserService(queries *database.Queries) UserService {
 	return &userService{
 		queries: queries,
-		ctx:     ctx,
 	}
 }
 
-func (s *userService) GetUserByID(id uuid.UUID) (database.User, error) {
+func (s *userService) GetUserByID(ctx context.Context, id uuid.UUID) (database.User, error) {
 	var user database.User
 
-	user, err := s.queries.GetUser(s.ctx, id)
+	user, err := s.queries.GetUser(ctx, id)
 	if err != nil {
 		return user, err
 	}
@@ -40,10 +38,10 @@ func (s *userService) GetUserByID(id uuid.UUID) (database.User, error) {
 	return user, nil
 }
 
-func (s *userService) FindUserByEmail(email string) (database.User, error) {
+func (s *userService) FindUserByEmail(ctx context.Context, email string) (database.User, error) {
 	var user database.User
 
-	user, err := s.queries.GetUserByEmail(s.ctx, email)
+	user, err := s.queries.GetUserByEmail(ctx, email)
 	if err != nil {
 		return user, err
 	}
@@ -51,8 +49,8 @@ func (s *userService) FindUserByEmail(email string) (database.User, error) {
 	return user, nil
 }
 
-func (s *userService) InsertUser(param database.InsertUserParams) (database.User, error) {
-	newUser, err := s.queries.InsertUser(s.ctx, param)
+func (s *userService) InsertUser(ctx context.Context, param database.InsertUserParams) (database.User, error) {
+	newUser, err := s.queries.InsertUser(ctx, param)
 	if err != nil {
 		return newUser, err
 	}
@@ -60,8 +58,8 @@ func (s *userService) InsertUser(param database.InsertUserParams) (database.User
 	return newUser, nil
 }
 
-func (s *userService) UpdateUser(param database.UpdateUserParams) (database.User, error) {
-	updatedUser, err := s.queries.UpdateUser(s.ctx, param)
+func (s *userService) UpdateUser(ctx context.Context, param database.UpdateUserParams) (database.User, error) {
+	updatedUser, err := s.queries.UpdateUser(ctx, param)
 	if err != nil {
 		return updatedUser, err
 	}
@@ -69,8 +67,8 @@ func (s *userService) UpdateUser(param database.UpdateUserParams) (database.User
 	return updatedUser, nil
 }
 
-func (s *userService) FindUserByGoogleID(googleID string) (database.User, error) {
-	user, err := s.queries.GetUserByGoogleID(s.ctx, sql.NullString{String: googleID, Valid: true})
+func (s *userService) FindUserByGoogleID(ctx context.Context, googleID string) (database.User, error) {
+	user, err := s.queries.GetUserByGoogleID(ctx, sql.NullString{String: googleID, Valid: true})
 	if err != nil {
 		return user, err
 	}
@@ -78,8 +76,8 @@ func (s *userService) FindUserByGoogleID(googleID string) (database.User, error)
 	return user, nil
 }
 
-func (s *userService) InsertUserWithGoogle(param database.InsertUserWithGoogleParams) (database.User, error) {
-	newUser, err := s.queries.InsertUserWithGoogle(s.ctx, param)
+func (s *userService) InsertUserWithGoogle(ctx context.Context, param database.InsertUserWithGoogleParams) (database.User, error) {
+	newUser, err := s.queries.InsertUserWithGoogle(ctx, param)
 	if err != nil {
 		return newUser, err
 	}

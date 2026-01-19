@@ -50,7 +50,7 @@ func (r *authRoutes) Login(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.userService.FindUserByEmail(param.Email)
+	user, err := r.userService.FindUserByEmail(ctx.Request.Context(), param.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			utils.RespondUnauthorized(ctx, "invalid email or password")
@@ -123,7 +123,7 @@ func (r *authRoutes) Refresh(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.userService.GetUserByID(refreshClaims.UserId)
+	user, err := r.userService.GetUserByID(ctx.Request.Context(), refreshClaims.UserId)
 	if err != nil {
 		// Don't leak whether a user exists.
 		utils.RespondUnauthorized(ctx, "invalid refresh token")
@@ -187,7 +187,7 @@ func (r *authRoutes) Register(ctx *gin.Context) {
 		},
 	}
 
-	user, err := r.userService.InsertUser(registerParam)
+	user, err := r.userService.InsertUser(ctx.Request.Context(), registerParam)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -237,7 +237,7 @@ func (r *authRoutes) Register(ctx *gin.Context) {
 func (r *authRoutes) Profile(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
 
-	user, err := r.userService.GetUserByID(userId)
+	user, err := r.userService.GetUserByID(ctx.Request.Context(), userId)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -273,7 +273,7 @@ func (r *authRoutes) Profile(ctx *gin.Context) {
 // @Router       /auth/update-profile [put]
 func (r *authRoutes) UpdateProfile(ctx *gin.Context) {
 	userId := ctx.MustGet("user_id").(uuid.UUID)
-	user, err := r.userService.GetUserByID(userId)
+	user, err := r.userService.GetUserByID(ctx.Request.Context(), userId)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -343,7 +343,7 @@ func (r *authRoutes) UpdateProfile(ctx *gin.Context) {
 		ProfileImageUrl: user.ProfileImageUrl,
 	}
 
-	updatedUser, err := r.userService.UpdateUser(updateUserParam)
+	updatedUser, err := r.userService.UpdateUser(ctx.Request.Context(), updateUserParam)
 	if err != nil {
 		utils.HandleErrorResponse(ctx, err)
 		return
@@ -392,7 +392,7 @@ func (r *authRoutes) GoogleAuth(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.userService.FindUserByGoogleID(googleUser.ID)
+	user, err := r.userService.FindUserByGoogleID(ctx.Request.Context(), googleUser.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			insertParam := database.InsertUserWithGoogleParams{
@@ -408,7 +408,7 @@ func (r *authRoutes) GoogleAuth(ctx *gin.Context) {
 				},
 			}
 
-			user, err = r.userService.InsertUserWithGoogle(insertParam)
+			user, err = r.userService.InsertUserWithGoogle(ctx.Request.Context(), insertParam)
 			if err != nil {
 				utils.HandleErrorResponse(ctx, err)
 				return
