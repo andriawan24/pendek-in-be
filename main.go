@@ -69,7 +69,7 @@ func main() {
 
 func loadEnv() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Failed to read .env file: %v", err)
+		fmt.Println("Failed to read .env file: %v", err)
 	}
 }
 
