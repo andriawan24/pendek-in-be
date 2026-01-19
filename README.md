@@ -1,4 +1,4 @@
-# pendek-in
+# Pendek-In Backend
 
 `pendek-in` is a high-performance, feature-rich URL shortener service built with Go. It provides a robust RESTful API for creating short links, tracking detailed click analytics, and managing user accounts with JWT and Google OAuth integration.
 
