@@ -164,10 +164,12 @@ func registerRoutes(r *gin.Engine, ctx context.Context, db *sql.DB, queries *dat
 	cacheService := services.NewCacheService(rdb)
 	clickLogService := services.NewClickLogService(queries)
 	oauthService := services.NewOAuthService()
+	dashboardService := services.NewDashboardService(ctx, queries)
 
 	linkRoutes := routes.NewLinkRoutes(linkService, clickLogService, cacheService)
 	authRoutes := routes.NewAuthRoutes(userService, oauthService)
 	analyticRoutes := routes.NewAnalyticRoutes(linkService, clickLogService)
+	dashboardRoutes := routes.NewDashboardRoutes(dashboardService)
 
 	authGroup := r.Group("/auth")
 	{
@@ -191,6 +193,11 @@ func registerRoutes(r *gin.Engine, ctx context.Context, db *sql.DB, queries *dat
 	{
 		analyticGroup.GET("/dashboard", analyticRoutes.GetDashboard)
 		analyticGroup.GET("/", analyticRoutes.GetAnalytics)
+	}
+
+	dashboardGroup := r.Group("/dashboard")
+	{
+		dashboardGroup.GET("/stats", dashboardRoutes.GetLandingStats)
 	}
 
 	r.Static("/uploads", "./uploads")

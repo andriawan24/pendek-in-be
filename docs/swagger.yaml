@@ -114,6 +114,15 @@ definitions:
       message:
         type: string
     type: object
+  responses.LandingStatsResponse:
+    properties:
+      total_active_users:
+        type: integer
+      total_clicks:
+        type: integer
+      total_links:
+        type: integer
+    type: object
   responses.LinkResponse:
     properties:
       click_count:
@@ -517,6 +526,30 @@ paths:
       summary: Update user profile
       tags:
       - Auth
+  /dashboard/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get total links created, active users, and total clicks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/responses.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/responses.LandingStatsResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Get landing page statistics
+      tags:
+      - Dashboard
   /links/{id}:
     delete:
       description: Delete a shortened link by its ID

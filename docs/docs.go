@@ -507,6 +507,47 @@ const docTemplate = `{
                 }
             }
         },
+        "/dashboard/stats": {
+            "get": {
+                "description": "Get total links created, active users, and total clicks",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get landing page statistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/responses.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/responses.LandingStatsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/links/all": {
             "get": {
                 "security": [
@@ -999,6 +1040,20 @@ const docTemplate = `{
                 "error": {},
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "responses.LandingStatsResponse": {
+            "type": "object",
+            "properties": {
+                "total_active_users": {
+                    "type": "integer"
+                },
+                "total_clicks": {
+                    "type": "integer"
+                },
+                "total_links": {
+                    "type": "integer"
                 }
             }
         },
